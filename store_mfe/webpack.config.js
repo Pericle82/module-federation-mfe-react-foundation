@@ -1,0 +1,61 @@
+const path = require('path');
+const { ModuleFederationPlugin } = require('webpack').container;
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+  entry: './src/mount.tsx',
+  mode: 'development',
+  output: {
+    publicPath: 'auto',
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js',
+    clean: true,
+  },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(ts|js)x?$/i,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              '@babel/preset-env',
+              '@babel/preset-react',
+              '@babel/preset-typescript',
+            ],
+            plugins: ['@babel/plugin-transform-runtime'],
+          },
+        },
+      },
+      {
+        test: /\.css$/i,
+        use: ['style-loader', 'css-loader'],
+      },
+    ],
+  },
+  plugins: [
+    new ModuleFederationPlugin({
+      name: 'store_mfe',
+      filename: 'remoteEntry.js',
+      exposes: {
+        './mount': './src/mount.tsx',
+        './store': './src/store.ts',
+      },
+      shared: {
+        react: { singleton: true, eager: false, requiredVersion: '^18.2.0' },
+        'react-dom': { singleton: true, eager: false, requiredVersion: '^18.2.0' },
+        '@reduxjs/toolkit': { singleton: true },
+        'react-redux': { singleton: true },
+      },
+    }),
+    new HtmlWebpackPlugin({
+      template: './public/index.html',
+      filename: 'index.html',
+      title: 'Store MFE',
+    }),
+  ],
+};

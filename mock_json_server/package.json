@@ -1,0 +1,12 @@
+{
+  "name": "mock_json_server",
+  "version": "1.0.0",
+  "description": "Mock backend for service_mfe using json-server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js --port 4000"
+  },
+  "devDependencies": {
+    "json-server": "^0.17.4"
+  }
+}
