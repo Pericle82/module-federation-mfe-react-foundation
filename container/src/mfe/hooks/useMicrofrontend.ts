@@ -69,7 +69,7 @@ export function useMicrofrontend<T = any>(options: MicrofrontendHookOptions<T>) 
     retryDelay = 1000
   } = options;
 
-  const elementRef = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLElement>(null);
   const instanceRef = useRef<MicrofrontendInstance | null>(null);
   const hasLoadedRef = useRef(false);
   const retryCountRef = useRef(0);
@@ -89,11 +89,14 @@ export function useMicrofrontend<T = any>(options: MicrofrontendHookOptions<T>) 
       const module = await loadMicrofrontendModule(moduleName);
       const { mount } = module;
       
-      // Mount the microfrontend
-      instanceRef.current = mount({
-        el: elementRef.current,
-        ...mountProps
-      });
+      // Prepare mount arguments with proper typing
+      const mountArgs = {
+        el: elementRef.current as HTMLElement,
+        ...(mountProps || {})
+      };
+      
+      // Mount the microfrontend with type assertion to handle dynamic typing
+      instanceRef.current = (mount as any)(mountArgs);
 
       // Trigger onLoad callback if provided and this is the first mount
       if (onLoad && !hasLoadedRef.current) {

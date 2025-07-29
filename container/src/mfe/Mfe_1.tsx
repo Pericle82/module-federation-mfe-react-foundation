@@ -25,7 +25,7 @@ const Mfe_1: React.FC<Mfe1Props> = ({ items, onLoad, addItem, removeItem, isRead
     retryDelay: 2000
   });
 
-  return <div ref={elementRef} />;
+  return <div ref={elementRef as React.RefObject<HTMLDivElement>} />;
 };
 
 export default Mfe_1;

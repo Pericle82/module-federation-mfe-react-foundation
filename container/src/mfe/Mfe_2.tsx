@@ -23,7 +23,7 @@ const Mfe_2: React.FC<Mfe2Props> = ({ items, onFilter, onLoad }) => {
     retryDelay: 2000
   });
 
-  return <div ref={elementRef} />;
+  return <div ref={elementRef as React.RefObject<HTMLDivElement>} />;
 };
 
 export default Mfe_2;

@@ -38,7 +38,7 @@ export function createMicrofrontendComponent<T = any>(
       ...defaultOptions
     });
 
-    return <div ref={elementRef} className={className} style={style} />;
+    return <div ref={elementRef as React.RefObject<HTMLDivElement>} className={className} style={style} />;
   };
 }
 
@@ -75,5 +75,5 @@ export function GenericMicrofrontend<T = any>(props: GenericMicrofrontendProps<T
     updatePropsOnChange
   });
 
-  return <div ref={elementRef} className={className} style={style} />;
+  return <div ref={elementRef as React.RefObject<HTMLDivElement>} className={className} style={style} />;
 }
