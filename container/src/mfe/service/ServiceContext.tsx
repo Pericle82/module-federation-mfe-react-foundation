@@ -9,7 +9,7 @@ type ServiceContextType = {
   items: any[];
   setItems: (items: any[]) => void;
   fetchItems: () => Promise<any[]>;
-  addItem: (item: any) => Promise<void>;
+  addItem: (item: any) => Promise<any[]>;
   removeItem: (id: string) => Promise<void>;
   filterItems: (query: string) => Promise<any[]>;
 };
@@ -37,23 +37,6 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({ children }) =>
       setError('Service MFE failed to load or is unavailable');
     }
   }, [serviceApi, isReady]);
-/* 
-  // Auto-fetch items when service becomes ready
-  useEffect(() => {
-    if (!serviceApi || !serviceApi.fetchItems || !isReady || items.length !== 0) return;
-    setIsLoading(true);
-    setError(null);
-    serviceApi.fetchItems()
-      .then((fetchedItems) => {
-        setItems(fetchedItems); 
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        console.error('Error fetching items:', err);
-        setError(err.message || 'Failed to fetch items');
-        setIsLoading(false);
-      });
-  }, [serviceApi, isReady, items.length]); */
 
   // Convenience methods that wrap the serviceApi methods
   const fetchItems = useCallback(async (): Promise<any[]> => {
@@ -77,7 +60,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({ children }) =>
     }
   }, [serviceApi]);
 
-  const addItem = useCallback(async (item: any): Promise<void> => {
+  const addItem = useCallback(async (item: any): Promise<any[]> => {
     if (!serviceApi || !serviceApi.addItem) {
       console.warn('addItem called before serviceApi is ready');
       setError('Service API not ready');
@@ -106,7 +89,9 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({ children }) =>
       
       // Note: We don't call fetchItems() here to avoid the delay
       // The optimistic update provides immediate feedback
-      
+
+      // Always return the latest items state after addition
+      return serviceApi.fetchItems ? await serviceApi.fetchItems() : [];
     } catch (err: any) {
       // If addition failed, remove the optimistic item and refetch to restore correct state
       setItems(prevItems => prevItems.filter(existingItem => !existingItem.id.toString().startsWith('temp-')));

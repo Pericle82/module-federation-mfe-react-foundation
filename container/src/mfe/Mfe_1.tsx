@@ -5,7 +5,7 @@ export type Mfe1Props = {
   items: any[];
   onLoad?: Function; // Optional prop to trigger initial load
   addItem: (item: any) => Promise<any[]>;
-  removeItem: (id: string | number) => Promise<any[]>;
+  removeItem: (id: string ) => Promise<void>;
   isReady: boolean; // NEW: add isReady prop
 };
 
