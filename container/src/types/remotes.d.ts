@@ -1,29 +1,36 @@
-// Type declarations for remote MFEs
-
 declare module 'mfe_1/mount' {
-  type MountOptions = {
-    el: HTMLElement;
-    items: any[];
-    onAddItem: (item: any) => Promise<void>;
-    onRemoveItem: (id: string) => Promise<void>;
+  type Mfe1Instance = {
+    unmount?: () => void;
   };
-
-  export function mount(options: MountOptions): Mfe1Instance;
+  export function mount(options: {
+    el: HTMLElement;
+    items?: any[];
+    onAddItem?: (item: any) => Promise<any[]>;
+    onRemoveItem?: (id: string | number) => Promise<any[]>;
+    onLoad?: () => void;
+    isReady?: boolean; // Optional prop to indicate if the service is ready
+    onAddItem?: (item: any) => Promise<any[]>;
+    onRemoveItem?: (id: string | number) => Promise<any[]>;
+  }): Mfe1Instance;
 }
 
 declare module 'mfe_2/mount' {
-  export function mount({ el, items = [], onFilter, onMount }: mf2MountProps): { unmount: () => void };
+  interface MountOptions {
+    el: HTMLElement;
+    items: any[];
+    onFilter?: (query: string) => Promise<any[]>;
+    onMount?: Function;
+  }
+
+  interface Mfe2Instance {
+    updateProps?: (props: { items: any[]; onFilter?: (query: string) => Promise<any[]> }) => void;
+    unmount?: () => void;
+  }
+
+  export function mount(options: MountOptions): Mfe2Instance;
 }
-
-declare module 'store_mfe/mount' {
-  export function mount(el: HTMLElement): { unmount: () => void };
-  export function setDataGlobal(data: any): void;
-  export function setStatusGlobal(mfe: string, status: string): void;
-}
-
-
 
 declare module 'service_mfe/mount' {
-  export function mount(el: HTMLElement): ServiceMfeApi;
+  import { ServiceApi } from './useService';
+  export function mount(container: HTMLElement): ServiceApi;
 }
-

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './App.css';
 import Mfe_1 from './mfe/Mfe_1';
 import Mfe_2 from './mfe/Mfe_2';
-import { ServiceProvider, useService, useServiceFunctions } from './mfe/service/ServiceContext';
+import { ServiceProvider, useServiceContext, useServiceFunctions } from './mfe/service/ServiceContext';
 
 // ErrorBoundary to catch runtime errors
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: any }> {
@@ -29,7 +29,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 // Main App component that uses the ServiceContext
 const App: React.FC = () => {
 
-  const { items, isReady, isLoading, error } = useService();
+  const { items, isReady, isLoading, error } = useServiceContext();
   const { filterItems, addItem, removeItem, fetchItems } = useServiceFunctions();
 
   return (
@@ -56,7 +56,7 @@ const App: React.FC = () => {
           />
           <Mfe_2
             items={items}
-            onFilter={filterItems}
+            onFilter={isReady ? filterItems : undefined}
             onLoad={() => console.log('MFE 2 loaded')}
           />
       

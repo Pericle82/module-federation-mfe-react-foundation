@@ -1,10 +1,10 @@
 const path = require('path');
 const { ModuleFederationPlugin } = require('webpack').container;
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: './src/mount.tsx',
   mode: 'development',
+  devtool: 'eval-source-map', // Enable proper source maps for debugging
   output: {
     publicPath: 'auto',
     path: path.resolve(__dirname, 'dist'),
@@ -28,6 +28,8 @@ module.exports = {
               '@babel/preset-typescript',
             ],
             plugins: ['@babel/plugin-transform-runtime'],
+            sourceMaps: true, // Enable source maps in Babel
+            inputSourceMap: true, // Use input source maps
           },
         },
       },
@@ -49,11 +51,6 @@ module.exports = {
         react: { singleton: true, eager: false, requiredVersion: '^18.2.0' },
         'react-dom': { singleton: true, eager: false, requiredVersion: '^18.2.0' },
       },
-    }),
-    new HtmlWebpackPlugin({
-      template: './public/index.html',
-      filename: 'index.html',
-      title: 'Service MFE',
     }),
   ],
 };

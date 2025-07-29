@@ -2,6 +2,13 @@
     unmount?: () => void;
   };
 
+  export interface mf2MountProps {
+    el: HTMLElement;
+    items?: any[];
+    onFilter?: (query: string) => Promise<any[]>;
+    onMount?: () => void;
+  }
+
   export interface ServiceMfeApi {
   unmount: () => void;
   fetchItems: () => Promise<any[]>;

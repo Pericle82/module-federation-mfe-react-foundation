@@ -4,7 +4,7 @@ export type ServiceApi = {
   unmount: () => void;
   fetchItems: () => Promise<any[]>;
   addItem: (item: any) => Promise<any[]>;
-  removeItem: (id: string | number) => Promise<any[]>;
+  removeItem: (id: string) => Promise<any[]>;
   filterItems: (query: string) => Promise<any[]>;
 };
 

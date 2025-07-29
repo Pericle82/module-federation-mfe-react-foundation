@@ -1,11 +1,11 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { sourceMapsEnabled } = require('process');
 const { ModuleFederationPlugin } = require('webpack').container;
 
 module.exports = {
-  entry: './src/bootstrap.tsx',
+  entry: './src/index.ts',
   mode: 'development',
+  devtool: 'eval-source-map', // Enable proper source maps for debugging
   output: {
     publicPath: 'auto',
     path: path.resolve(__dirname, 'dist'),
@@ -34,6 +34,8 @@ module.exports = {
                 ['@babel/preset-react', { runtime: 'automatic' }],
                 '@babel/preset-typescript'
               ],
+              sourceMaps: true, // Enable source maps in Babel
+              inputSourceMap: true, // Use input source maps
             },
           },
         ],
@@ -49,6 +51,8 @@ module.exports = {
               ['@babel/preset-env', { targets: 'defaults' }],
               ['@babel/preset-react', { runtime: 'automatic' }],
             ],
+            sourceMaps: true, // Enable source maps in Babel
+            inputSourceMap: true, // Use input source maps
           },
         },
       },

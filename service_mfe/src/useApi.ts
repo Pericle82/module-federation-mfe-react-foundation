@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fetchItems, addItem, removeItem } from "./api";
+import { fetchItems, addItemImmediate, removeItemImmediate } from "./api";
 
 export const useAPI = () => {
 
@@ -21,9 +21,10 @@ export const useAPI = () => {
         if (!newItem.trim()) return;
         setLoaders(prev => new Map(prev).set('add', true));
         try {
-            const updated = await addItem({ name: newItem });
-            console.log('Item added:', updated);
-            return updated;
+            const createdItem = await addItemImmediate({ name: newItem });
+            console.log('Item added successfully:', createdItem);
+            // Return the created item - ServiceContext will handle optimistic updates
+            return [createdItem]; // Return array with the new item
         } catch (error) {
             console.error('Error adding item:', error);
             throw error;
@@ -35,9 +36,10 @@ export const useAPI = () => {
     const removeItemHandler = async (id: string) => {
         setLoaders(prev => new Map(prev).set('remove', true));
         try {
-            const updated = await removeItem(id);
-            console.log('Item removed:', updated);
-            return updated;
+            await removeItemImmediate(id);
+            console.log('Item removed successfully');
+            // Don't refetch here - let the ServiceContext handle the state update
+            return []; // Return empty array to satisfy the interface
         } catch (error) {
             console.error('Error removing item:', error);
             throw error;

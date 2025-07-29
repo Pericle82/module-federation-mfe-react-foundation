@@ -4,6 +4,7 @@ const { ModuleFederationPlugin } = require('webpack').container;
 module.exports = {
   entry: './src/mount.tsx',
   mode: 'development',
+  devtool: 'eval-source-map', // Enable proper source maps for debugging
   output: {
     publicPath: 'auto',
     path: path.resolve(__dirname, 'dist'),
@@ -27,6 +28,8 @@ module.exports = {
               '@babel/preset-typescript',
             ],
             plugins: ['@babel/plugin-transform-runtime'],
+            sourceMaps: true, // Enable source maps in Babel
+            inputSourceMap: true, // Use input source maps
           },
         },
       },

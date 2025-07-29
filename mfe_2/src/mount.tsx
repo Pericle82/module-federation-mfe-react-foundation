@@ -24,7 +24,7 @@ const Mf2App: React.FC<Mf2AppProps> = (props) => {
   }, [onMount]);
 
   useEffect(() => {
-    if (onFilter) {
+    if (onFilter && filter.trim()) {
       onFilter(filter);
     }
   }, [filter, onFilter]);
@@ -105,15 +105,26 @@ interface mf2MountProps {
   onMount?: () => void;
 }
 
-export function mount({el, items = [], onFilter, onMount}: mf2MountProps): { unmount: () => void } {
+export function mount({el, items = [], onFilter, onMount}: mf2MountProps): { unmount: () => void; updateProps: (props: { items?: any[]; onFilter?: (query: string) => Promise<any[]> }) => void } {
   let root = roots.get(el);
   if (!root) {
     root = ReactDOM.createRoot(el);
     roots.set(el, root);
   }
-  root.render(<Mf2App onFilter={onFilter} onMount={onMount} items={items} />);
+  
+  let currentProps = { items, onFilter, onMount };
+  
+  const render = () => {
+    root!.render(<Mf2App {...currentProps} />);
+  };
+  
+  render(); // Initial render
 
   return {
+    updateProps: (newProps: { items?: any[]; onFilter?: (query: string) => Promise<any[]> }) => {
+      currentProps = { ...currentProps, ...newProps };
+      render();
+    },
     unmount: () => {
       root?.unmount();
       roots.delete(el);

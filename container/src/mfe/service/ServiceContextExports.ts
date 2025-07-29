@@ -4,7 +4,7 @@ import React from 'react';
 
 export { 
   ServiceProvider, 
-  useService, 
+  useServiceContext, 
   useServiceFunctions, 
   useServiceState
 } from './ServiceContext';
