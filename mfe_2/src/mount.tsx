@@ -14,44 +14,64 @@ const Mf2App: React.FC<Mf2AppProps> = (props) => {
     filteredItems,
     filter,
     currentFilter,
-    setFilter,
-    handleFilter,
-    handleFilterReset,
-    loaders,
-    errors,
+    externalLoading,
+    loadingOperation,
+    handleFilterChange,
+    applyFilter,
+    clearFilter,
   } = useItemsFilter({ serviceApi });
+
+  const getLoadingMessage = (operation: string) => {
+    switch (operation) {
+      case 'addItem':
+        return '➕ Adding new item...';
+      case 'removeItem':
+        return '🗑️ Removing item...';
+      case 'dataSync':
+        return '🔄 Syncing data...';
+      default:
+        return '🔄 Another MFE is performing operations...';
+    }
+  };
 
   return (
     <div style={{ border: '2px solid #007bff', padding: 16, borderRadius: 8, margin: 8 }}>
       <h2>MF 2 - Filtro Items</h2>
       
-      {/* Loading states */}
-      {loaders.fetchItems && <p style={{ color: 'blue' }}>Loading items...</p>}
-      {loaders.filterItems && <p style={{ color: 'blue' }}>Filtering items...</p>}
-      
-      {/* Error states */}
-      {errors.fetchItems && <p style={{ color: 'red' }}>Error loading items: {errors.fetchItems}</p>}
-      {errors.filterItems && <p style={{ color: 'red' }}>Error filtering items: {errors.filterItems}</p>}
+      {/* External loading state (from other MFEs) */}
+      {externalLoading && (
+        <div style={{ 
+          color: 'orange', 
+          fontWeight: 'bold', 
+          background: '#fff3cd', 
+          padding: '8px', 
+          borderRadius: '4px',
+          margin: '8px 0',
+          border: '1px solid #ffeaa7'
+        }}>
+          {getLoadingMessage(loadingOperation)}
+        </div>
+      )}
       
       <input
         type="text"
         value={filter}
-        onChange={e => setFilter(e.target.value)}
+        onChange={handleFilterChange}
         placeholder="Filtra items..."
         style={{ marginRight: 8 }}
       />
 
       <button 
-        onClick={() => handleFilterReset()} 
-        disabled={loaders.filterItems}
+        onClick={clearFilter}
+        disabled={externalLoading}
       >
         Resetta Filtro
       </button>
       <span style={{ marginLeft: 8 }}>Filtro attuale: {currentFilter || 'Nessuno'}</span>
       <br />
       <button
-        onClick={handleFilter}
-        disabled={loaders.filterItems || !filter.trim()}
+        onClick={applyFilter}
+        disabled={externalLoading || !filter.trim()}
       >
         Filtra
       </button>

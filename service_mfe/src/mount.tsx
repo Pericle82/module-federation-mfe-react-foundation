@@ -16,6 +16,8 @@ export interface ServiceMfeApi {
   removeUser: (id: string) => Promise<any[]>;
   // Event system for data synchronization with data type specificity
   onDataChange: <T = any>(dataType: 'items' | 'users', callback: (data: T[]) => void) => () => void; // Returns unsubscribe function
+  // New: Loading state notifications
+  onLoadingChange: (dataType: 'items' | 'users', callback: (isLoading: boolean, operation?: string) => void) => () => void;
   loaders: {
     fetchItems: boolean;
     addItem: boolean;
@@ -46,11 +48,20 @@ const dataChangeListeners = {
   users: new Set<(data: any[]) => void>(),
 };
 
+// Global event system for loading state notifications
+const loadingChangeListeners = {
+  items: new Set<(isLoading: boolean, operation?: string) => void>(),
+  users: new Set<(isLoading: boolean, operation?: string) => void>(),
+};
+
 const notifyDataChange = async <T = any>(
   dataType: 'items' | 'users',
   getLatestData: () => Promise<T[]>
 ) => {
   try {
+    // Notify that we're starting to sync data
+    notifyLoadingChange(dataType, true, 'dataSync');
+    
     const latestData = await getLatestData();
     const listeners = dataChangeListeners[dataType];
     listeners.forEach(callback => {
@@ -60,9 +71,29 @@ const notifyDataChange = async <T = any>(
         console.error(`Error in ${dataType} data change listener:`, error);
       }
     });
+    
+    // Notify that data sync is complete
+    notifyLoadingChange(dataType, false, 'dataSync');
   } catch (error) {
     console.error(`Error getting latest ${dataType} for notification:`, error);
+    // Make sure to notify loading end even if there's an error
+    notifyLoadingChange(dataType, false, 'dataSync');
   }
+};
+
+const notifyLoadingChange = (
+  dataType: 'items' | 'users',
+  isLoading: boolean,
+  operation?: string
+) => {
+  const listeners = loadingChangeListeners[dataType];
+  listeners.forEach(callback => {
+    try {
+      callback(isLoading, operation);
+    } catch (error) {
+      console.error(`Error in ${dataType} loading state listener:`, error);
+    }
+  });
 };
 
 export interface ServiceMfeMountProps {
@@ -103,7 +134,11 @@ export function mount({el}: ServiceMfeMountProps): ServiceMfeApi {
         return items;
       },
       addItem: async (item: any) => {
+        // Notify loading start
+        notifyLoadingChange('items', true, 'addItem');
         const items = await addItemHandler(item);
+        // Notify loading end
+        notifyLoadingChange('items', false, 'addItem');
         // Notify all listeners about items data change
         await notifyDataChange('items', fetchItemsHandler);
         return items ?? [];
@@ -112,7 +147,11 @@ export function mount({el}: ServiceMfeMountProps): ServiceMfeApi {
         if (!id) {
           throw new Error('ID is required to remove an item');
         }
+        // Notify loading start
+        notifyLoadingChange('items', true, 'removeItem');
         const items = await removeItemHandler(id);
+        // Notify loading end
+        notifyLoadingChange('items', false, 'removeItem');
         // Notify all listeners about items data change
         await notifyDataChange('items', fetchItemsHandler);
         return items;
@@ -145,6 +184,13 @@ export function mount({el}: ServiceMfeMountProps): ServiceMfeApi {
         // Return unsubscribe function
         return () => {
           dataChangeListeners[dataType].delete(callback as any);
+        };
+      },
+      onLoadingChange: (dataType: 'items' | 'users', callback: (isLoading: boolean, operation?: string) => void) => {
+        loadingChangeListeners[dataType].add(callback);
+        // Return unsubscribe function
+        return () => {
+          loadingChangeListeners[dataType].delete(callback);
         };
       },
       loaders,
@@ -202,6 +248,13 @@ export function mount({el}: ServiceMfeMountProps): ServiceMfeApi {
       // Return unsubscribe function
       return () => {
         dataChangeListeners[dataType].delete(callback as any);
+      };
+    },
+    onLoadingChange: (dataType: 'items' | 'users', callback: (isLoading: boolean, operation?: string) => void) => {
+      loadingChangeListeners[dataType].add(callback);
+      // Return unsubscribe function
+      return () => {
+        loadingChangeListeners[dataType].delete(callback);
       };
     },
     get loaders() {
