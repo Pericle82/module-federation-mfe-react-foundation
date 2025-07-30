@@ -3,81 +3,122 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
 type MF1props = {
-  items?: any[] | [];
-  onAddItem?: (item: any) => Promise<any[]>;
-  onRemoveItem?: (id: string | number) => Promise<any[]>;
+  serviceApi?: any; // Service API with loaders, errors, and methods
 };
 
 const Mfe1App: React.FC<MF1props> = (props) => {
-
-  const { items, onAddItem, onRemoveItem } = props;
-
+  const { serviceApi } = props;
+  
+  const [items, setItems] = useState<any[]>([]);
   const [newItem, setNewItem] = useState("");
-  const [loading, setLoading] = useState(false);
 
+  // Fetch items when component mounts or serviceApi becomes available
   useEffect(() => {
-    if (items && items.length > 0) {
-      console.log('MFE 1 received items:', items);
-    } else {
-      console.warn('MFE 1 received empty or undefined items');
-    }
-  }, [items]);
+    const fetchItems = async () => {
+      if (serviceApi?.fetchItems) {
+        try {
+          const result = await serviceApi.fetchItems();
+          setItems(result);
+        } catch (error) {
+          console.error('Failed to fetch items:', error);
+        }
+      }
+    };
+
+    fetchItems();
+  }, [serviceApi]);
+
+  // Subscribe to data changes
+  useEffect(() => {
+    if (!serviceApi?.onDataChange) return;
+
+    const unsubscribe = serviceApi.onDataChange((updatedItems: any[]) => {
+      console.log('MFE_1 received data change notification:', updatedItems);
+      setItems(updatedItems);
+    });
+
+    return unsubscribe; // Cleanup subscription on unmount
+  }, [serviceApi]);
 
   const handleAdd = useCallback(async () => {
-  
-    if (!newItem.trim()) return;
-    setLoading(true);
+    if (!newItem.trim() || !serviceApi?.addItem) return;
+    
     try {
-      if (onAddItem) {
-        await onAddItem(newItem);
-      }
-      else {
-        console.warn('onAddItem function is not provided');
-      }
+      await serviceApi.addItem(newItem);
       setNewItem("");
+      // Note: Items will be updated via onDataChange notification
     } catch (error) {
       console.error('Failed to add item:', error);
-    } finally {
-      setLoading(false);
     }
-  }, [newItem, onAddItem]);
+  }, [newItem, serviceApi]);
 
   const handleRemove = useCallback(async (id: string | number) => {
-    setLoading(true);
+    if (!serviceApi?.removeItem) return;
+    
     try {
-      if (onRemoveItem) {
-        await onRemoveItem(id);
-      }
-      else {
-        console.warn('onRemoveItem function is not provided');
-      }
+      await serviceApi.removeItem(id);
+      // Note: Items will be updated via onDataChange notification
     } catch (error) {
       console.error('Failed to remove item:', error);
-    } finally {
-      setLoading(false);
     }
+  }, [serviceApi]);
 
-  }, [onRemoveItem]);
+  // Get loading and error states from service API
+  const loaders = serviceApi?.loaders || {
+    fetchItems: false,
+    addItem: false,
+    removeItem: false,
+    filterItems: false,
+  };
+  
+  const errors = serviceApi?.errors || {
+    fetchItems: null,
+    addItem: null,
+    removeItem: null,
+    filterItems: null,
+  };
 
   return (
     <div style={{ border: '2px solid #764ba2', borderRadius: 8, padding: 16, margin: 16 }}>
       <h2>mfe_1 Micro-Frontend</h2>
-      {loading && <p>Loading...</p>}
+      
+      {/* Loading states */}
+      {loaders.fetchItems && <p style={{ color: 'blue' }}>Loading items...</p>}
+      {loaders.addItem && <p style={{ color: 'blue' }}>Adding item...</p>}
+      {loaders.removeItem && <p style={{ color: 'blue' }}>Removing item...</p>}
+      
+      {/* Error states */}
+      {errors.fetchItems && <p style={{ color: 'red' }}>Error loading items: {errors.fetchItems}</p>}
+      {errors.addItem && <p style={{ color: 'red' }}>Error adding item: {errors.addItem}</p>}
+      {errors.removeItem && <p style={{ color: 'red' }}>Error removing item: {errors.removeItem}</p>}
+      
       <ul>
         {items?.map((item: any) => (
           <li key={item.id}>
             {item.name || JSON.stringify(item)}
-            <button style={{ marginLeft: 8 }} onClick={() => handleRemove(item.id)}>Elimina</button>
+            <button 
+              style={{ marginLeft: 8 }} 
+              onClick={() => handleRemove(item.id)}
+              disabled={loaders.removeItem}
+            >
+              Elimina
+            </button>
           </li>
         ))}
       </ul>
+      
       <input
         type="text"
         value={newItem}
         onChange={e => setNewItem(e.target.value)}
         placeholder="Nuovo oggetto"
       />
-      <button onClick={handleAdd} disabled={loading || !newItem.trim()}>Aggiungi</button>
+      <button 
+        onClick={handleAdd} 
+        disabled={loaders.addItem || !newItem.trim()}
+      >
+        Aggiungi
+      </button>
     </div>
   );
 };
@@ -88,9 +129,7 @@ const roots = new WeakMap<HTMLElement, ReturnType<typeof ReactDOM.createRoot>>()
 
 interface mf1MountProps {
   el: HTMLElement;
-  items?: any[];
-  onAddItem?: (item: any) => Promise<any[]>;
-  onRemoveItem?: (id: string | number) => Promise<any[]>;
+  serviceApi?: any; // Service API with loaders, errors, and methods
 }
 
 export function unmount(el: HTMLElement) {
@@ -101,20 +140,17 @@ export function unmount(el: HTMLElement) {
   }
 }
 
-export function mount({el, items = [], onAddItem, onRemoveItem}: mf1MountProps): {
+export function mount({el, serviceApi}: mf1MountProps): {
   unmount: () => void;
 } {
-
   let root = roots.get(el);
   if (!root) {
     root = ReactDOM.createRoot(el);
     roots.set(el, root);
   }
-  root.render(<Mfe1App
-                        onRemoveItem={onRemoveItem}
-                        onAddItem={onAddItem}
-                        items={items} />
-              );
+  
+  root.render(<Mfe1App serviceApi={serviceApi} />);
+  
   return {
     unmount: () => {
       root?.unmount();
