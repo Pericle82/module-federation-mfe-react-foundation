@@ -14,3 +14,8 @@ else
   kill $PIDS
   echo "All MFEs and container stopped."
 fi
+
+// Optionally, you can also use pgrep to find and kill processes
+# pgrep -f "npm start" will find all processes that match "npm start"
+# Uncomment the line below to use pgrep instead of ps aux
+# pgrep -f "npm start" | xargs kill
