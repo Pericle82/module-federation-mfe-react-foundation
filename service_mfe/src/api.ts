@@ -51,3 +51,38 @@ export function filterItems(query: string): Promise<any[]> {
         });
 }
 
+// Users API functions
+export function fetchUsers(): Promise<any[]> {
+    return fetch('http://localhost:4000/users')
+        .then(res => res.json())
+        .catch((e) => {
+            console.error('Failed to fetch users:', e);
+            return []
+        });
+}
+
+export function addUserImmediate(user: any): Promise<any> {
+    return fetch('http://localhost:4000/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user)
+    })
+        .then(res => res.json()); // Return the created user with ID
+}
+
+export function removeUserImmediate(id: string | number): Promise<void> {
+    return fetch(`http://localhost:4000/users/${id}`, {
+        method: 'DELETE'
+    })
+        .then(() => {}); // No refetch
+}
+
+export function filterUsers(query: string): Promise<any[]> {
+    return fetch(`http://localhost:4000/users?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .catch((e) => {
+            console.error('Failed to filter users:', e);
+            return [];
+        });
+}
+

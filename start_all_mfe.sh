@@ -17,6 +17,9 @@ echo "Installing store_mfe dependencies..."
 echo "Installing service_mfe dependencies..."
 ( cd service_mfe && rm -rf node_modules package-lock.json && npm install && npm start > ../service_mfe.log 2>&1 & )
 
+echo "Installing users_mfe dependencies..."
+( cd users_mfe && rm -rf node_modules package-lock.json && npm install && npm start > ../users_mfe.log 2>&1 & )
+
 echo "Installing container dependencies..."
 ( cd container && rm -rf node_modules package-lock.json && npm install && npm start > ../container.log 2>&1 & )
 

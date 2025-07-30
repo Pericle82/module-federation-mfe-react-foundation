@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './App.css';
 import Mfe_1 from './mfe/Mfe_1';
 import Mfe_2 from './mfe/Mfe_2';
+import Users_Mfe from './mfe/Users_Mfe';
 import Service_Mfe, { ServiceMfeRef } from './mfe/Service_Mfe';
 
 // ErrorBoundary to catch runtime errors
@@ -64,6 +65,11 @@ const App: React.FC = () => {
           <Mfe_2
             serviceApi={serviceApi}
             onLoad={() => console.log('MFE 2 loaded')}
+            isReady={isReady}
+          />
+          <Users_Mfe
+            serviceApi={serviceApi}
+            onLoad={() => console.log('Users MFE loaded')}
             isReady={isReady}
           />
         </section>

@@ -34,3 +34,17 @@ declare module 'service_mfe/mount' {
   import { ServiceApi } from './useService';
   export function mount(container: HTMLElement): ServiceApi;
 }
+
+declare module 'users_mfe/mount' {
+  type UsersMfeInstance = {
+    unmount?: () => void;
+  };
+  export function mount(options: {
+    el: HTMLElement;
+    serviceApi?: any;
+  }): UsersMfeInstance;
+}
+
+declare module 'store_mfe/mount' {
+  export function mount(el: HTMLElement): void;
+}
