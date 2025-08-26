@@ -69,7 +69,6 @@ module.exports = {
         mfe_1: 'mfe_1@http://localhost:3001/remoteEntry.js',
         mfe_2: 'mfe_2@http://localhost:3002/remoteEntry.js',
         service_mfe: 'service_mfe@http://localhost:3003/remoteEntry.js',
-        store_mfe: 'store_mfe@http://localhost:3004/remoteEntry.js',
         users_mfe: 'users_mfe@http://localhost:3005/remoteEntry.js'
       }
     }),

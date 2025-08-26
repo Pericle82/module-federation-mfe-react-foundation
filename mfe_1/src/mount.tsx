@@ -2,6 +2,17 @@
 import React from 'react';
 import { useItems } from './useItems';
 import { mountUtils } from './useMount';
+import { 
+  MfeContainer, 
+  MfeTitle, 
+  StatusMessage, 
+  ItemsList, 
+  ItemsListItem, 
+  InputContainer, 
+  Input, 
+  Button, 
+  RemoveButton 
+} from './components';
 
 type MF1props = {
   serviceApi?: any; // Service API with loaders, errors, and methods
@@ -21,47 +32,48 @@ const Mfe1App: React.FC<MF1props> = (props) => {
   } = useItems({ serviceApi });
 
   return (
-    <div style={{ border: '2px solid #764ba2', borderRadius: 8, padding: 16, margin: 16 }}>
-      <h2>mfe_1 Micro-Frontend</h2>
+    <MfeContainer>
+      <MfeTitle>📦 Items Manager</MfeTitle>
       
       {/* Loading states */}
-      {loaders.fetchItems && <p style={{ color: 'blue' }}>Loading items...</p>}
-      {loaders.addItem && <p style={{ color: 'blue' }}>Adding item...</p>}
-      {loaders.removeItem && <p style={{ color: 'blue' }}>Removing item...</p>}
+      {loaders.fetchItems && <StatusMessage variant="loading">🔄 Loading items...</StatusMessage>}
+      {loaders.addItem && <StatusMessage variant="loading">➕ Adding item...</StatusMessage>}
+      {loaders.removeItem && <StatusMessage variant="loading">🗑️ Removing item...</StatusMessage>}
       
       {/* Error states */}
-      {errors.fetchItems && <p style={{ color: 'red' }}>Error loading items: {errors.fetchItems}</p>}
-      {errors.addItem && <p style={{ color: 'red' }}>Error adding item: {errors.addItem}</p>}
-      {errors.removeItem && <p style={{ color: 'red' }}>Error removing item: {errors.removeItem}</p>}
+      {errors.fetchItems && <StatusMessage variant="error">❌ Error loading items: {errors.fetchItems}</StatusMessage>}
+      {errors.addItem && <StatusMessage variant="error">❌ Error adding item: {errors.addItem}</StatusMessage>}
+      {errors.removeItem && <StatusMessage variant="error">❌ Error removing item: {errors.removeItem}</StatusMessage>}
       
-      <ul>
+      <ItemsList>
         {items?.map((item: any) => (
-          <li key={item.id}>
-            {item.name || JSON.stringify(item)}
-            <button 
-              style={{ marginLeft: 8 }} 
+          <ItemsListItem key={item.id}>
+            <span>{item.name || JSON.stringify(item)}</span>
+            <RemoveButton 
               onClick={() => handleRemove(item.id)}
               disabled={loaders.removeItem}
             >
-              Elimina
-            </button>
-          </li>
+              🗑️ Remove
+            </RemoveButton>
+          </ItemsListItem>
         ))}
-      </ul>
+      </ItemsList>
       
-      <input
-        type="text"
-        value={newItem}
-        onChange={e => setNewItem(e.target.value)}
-        placeholder="Nuovo oggetto"
-      />
-      <button 
-        onClick={handleAdd} 
-        disabled={loaders.addItem || !newItem.trim()}
-      >
-        Aggiungi
-      </button>
-    </div>
+      <InputContainer>
+        <Input
+          type="text"
+          value={newItem}
+          onChange={e => setNewItem(e.target.value)}
+          placeholder="Enter new item name..."
+        />
+        <Button 
+          onClick={handleAdd} 
+          disabled={loaders.addItem || !newItem.trim()}
+        >
+          ➕ Add Item
+        </Button>
+      </InputContainer>
+    </MfeContainer>
   );
 };
 

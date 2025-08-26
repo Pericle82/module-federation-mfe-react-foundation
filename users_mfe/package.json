@@ -2,13 +2,15 @@
   "name": "users_mfe",
   "version": "1.0.0",
   "main": "src/mount.tsx",
-   "scripts": {
+  "scripts": {
     "start": "webpack serve --port 3005 --config webpack.config.js"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",
+    "@types/styled-components": "^5.1.34",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "styled-components": "^6.1.19"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

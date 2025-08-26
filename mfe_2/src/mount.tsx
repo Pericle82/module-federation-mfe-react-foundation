@@ -1,6 +1,17 @@
 import React from 'react';
 import { useItemsFilter } from './useItemsFilter';
 import { mountUtils } from './useMount';
+import {
+  MfeContainer,
+  MfeTitle,
+  LoadingNotification,
+  FilterContainer,
+  FilterInput,
+  FilterStatus,
+  Button,
+  ItemsList,
+  ItemsListItem,
+} from './components';
 
 type Mf2AppProps = {
   serviceApi?: any; // Service API with loaders, errors, and methods
@@ -35,53 +46,54 @@ const Mf2App: React.FC<Mf2AppProps> = (props) => {
   };
 
   return (
-    <div style={{ border: '2px solid #007bff', padding: 16, borderRadius: 8, margin: 8 }}>
-      <h2>MF 2 - Filtro Items</h2>
+    <MfeContainer>
+      <MfeTitle>🔍 Items Filter</MfeTitle>
       
       {/* External loading state (from other MFEs) */}
       {externalLoading && (
-        <div style={{ 
-          color: 'orange', 
-          fontWeight: 'bold', 
-          background: '#fff3cd', 
-          padding: '8px', 
-          borderRadius: '4px',
-          margin: '8px 0',
-          border: '1px solid #ffeaa7'
-        }}>
+        <LoadingNotification>
+          <span>⚡</span>
           {getLoadingMessage(loadingOperation)}
-        </div>
+        </LoadingNotification>
       )}
       
-      <input
-        type="text"
-        value={filter}
-        onChange={handleFilterChange}
-        placeholder="Filtra items..."
-        style={{ marginRight: 8 }}
-      />
-
-      <button 
-        onClick={clearFilter}
-        disabled={externalLoading}
-      >
-        Resetta Filtro
-      </button>
-      <span style={{ marginLeft: 8 }}>Filtro attuale: {currentFilter || 'Nessuno'}</span>
-      <br />
-      <button
-        onClick={applyFilter}
-        disabled={externalLoading || !filter.trim()}
-      >
-        Filtra
-      </button>
+      <FilterContainer>
+        <FilterInput
+          type="text"
+          value={filter}
+          onChange={handleFilterChange}
+          placeholder="Type to filter items..."
+        />
+        
+        <Button 
+          variant="secondary"
+          onClick={clearFilter}
+          disabled={externalLoading}
+        >
+          🔄 Reset
+        </Button>
+        
+        <Button
+          variant="success"
+          onClick={applyFilter}
+          disabled={externalLoading || !filter.trim()}
+        >
+          🔍 Apply Filter
+        </Button>
+        
+        <FilterStatus>
+          Current: {currentFilter || 'None'} • Total: {filteredItems?.length || 0} items
+        </FilterStatus>
+      </FilterContainer>
       
-      <ul>
+      <ItemsList>
         {filteredItems?.map((item: any) => (
-          <li key={item.id}>{item.name || JSON.stringify(item)}</li>
+          <ItemsListItem key={item.id}>
+            {item.name || JSON.stringify(item)}
+          </ItemsListItem>
         ))}
-      </ul>
-    </div>
+      </ItemsList>
+    </MfeContainer>
   );
 };
 

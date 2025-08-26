@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
+import React, { useImperativeHandle } from 'react';
 import ReactDOM from 'react-dom/client';
 import { useAPI } from './useApi';
 
@@ -134,27 +134,39 @@ export function mount({el}: ServiceMfeMountProps): ServiceMfeApi {
         return items;
       },
       addItem: async (item: any) => {
-        // Notify loading start
-        notifyLoadingChange('items', true, 'addItem');
-        const items = await addItemHandler(item);
-        // Notify loading end
-        notifyLoadingChange('items', false, 'addItem');
-        // Notify all listeners about items data change
-        await notifyDataChange('items', fetchItemsHandler);
-        return items ?? [];
+        try {
+          // Notify loading start
+          notifyLoadingChange('items', true, 'addItem');
+          const items = await addItemHandler(item);
+          // Notify all listeners about items data change
+          await notifyDataChange('items', fetchItemsHandler);
+          return items ?? [];
+        } catch (error) {
+          console.error('Error in addItem:', error);
+          throw error;
+        } finally {
+          // Always notify loading end
+          notifyLoadingChange('items', false, 'addItem');
+        }
       },
       removeItem: async (id: string) => {
         if (!id) {
           throw new Error('ID is required to remove an item');
         }
-        // Notify loading start
-        notifyLoadingChange('items', true, 'removeItem');
-        const items = await removeItemHandler(id);
-        // Notify loading end
-        notifyLoadingChange('items', false, 'removeItem');
-        // Notify all listeners about items data change
-        await notifyDataChange('items', fetchItemsHandler);
-        return items;
+        try {
+          // Notify loading start
+          notifyLoadingChange('items', true, 'removeItem');
+          const items = await removeItemHandler(id);
+          // Notify all listeners about items data change
+          await notifyDataChange('items', fetchItemsHandler);
+          return items;
+        } catch (error) {
+          console.error('Error in removeItem:', error);
+          throw error;
+        } finally {
+          // Always notify loading end
+          notifyLoadingChange('items', false, 'removeItem');
+        }
       },
       fetchUsers: async () => {
         const users = await fetchUsersHandler();
@@ -165,19 +177,39 @@ export function mount({el}: ServiceMfeMountProps): ServiceMfeApi {
         return users;
       },
       addUser: async (user: any) => {
-        const users = await addUserHandler(user);
-        // Notify all listeners about users data change
-        await notifyDataChange('users', fetchUsersHandler);
-        return users ?? [];
+        try {
+          // Notify loading start
+          notifyLoadingChange('users', true, 'addUser');
+          const users = await addUserHandler(user);
+          // Notify all listeners about users data change
+          await notifyDataChange('users', fetchUsersHandler);
+          return users ?? [];
+        } catch (error) {
+          console.error('Error in addUser:', error);
+          throw error;
+        } finally {
+          // Always notify loading end
+          notifyLoadingChange('users', false, 'addUser');
+        }
       },
       removeUser: async (id: string) => {
         if (!id) {
           throw new Error('ID is required to remove a user');
         }
-        const users = await removeUserHandler(id);
-        // Notify all listeners about users data change
-        await notifyDataChange('users', fetchUsersHandler);
-        return users;
+        try {
+          // Notify loading start
+          notifyLoadingChange('users', true, 'removeUser');
+          const users = await removeUserHandler(id);
+          // Notify all listeners about users data change
+          await notifyDataChange('users', fetchUsersHandler);
+          return users;
+        } catch (error) {
+          console.error('Error in removeUser:', error);
+          throw error;
+        } finally {
+          // Always notify loading end
+          notifyLoadingChange('users', false, 'removeUser');
+        }
       },
       onDataChange: <T = any>(dataType: 'items' | 'users', callback: (data: T[]) => void) => {
         dataChangeListeners[dataType].add(callback as any);
@@ -244,17 +276,19 @@ export function mount({el}: ServiceMfeMountProps): ServiceMfeApi {
       return api.removeUser(i);
     },
     onDataChange: <T = any>(dataType: 'items' | 'users', callback: (data: T[]) => void) => {
-      dataChangeListeners[dataType].add(callback as any);
+      const listeners = dataChangeListeners[dataType];
+      listeners.add(callback as any);
       // Return unsubscribe function
       return () => {
-        dataChangeListeners[dataType].delete(callback as any);
+        listeners.delete(callback as any);
       };
     },
     onLoadingChange: (dataType: 'items' | 'users', callback: (isLoading: boolean, operation?: string) => void) => {
-      loadingChangeListeners[dataType].add(callback);
+      const listeners = loadingChangeListeners[dataType];
+      listeners.add(callback);
       // Return unsubscribe function
       return () => {
-        loadingChangeListeners[dataType].delete(callback);
+        listeners.delete(callback);
       };
     },
     get loaders() {

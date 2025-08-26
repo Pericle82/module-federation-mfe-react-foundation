@@ -1,0 +1,144 @@
+/* MFE Status Component Styles */
+.statusContainer {
+  padding: var(--spacing-xl);
+  background: var(--white-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-family);
+}
+
+.statusTitle {
+  color: var(--primary-color);
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--font-size-xxl);
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.statusCard {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: var(--white-color);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-md);
+  text-align: center;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.statusCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.statusCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    var(--success-color) 0%, 
+    var(--info-color) 50%, 
+    var(--warning-color) 100%);
+}
+
+.statusCard.mfe1 {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+.statusCard.mfe2 {
+  background: linear-gradient(135deg, var(--info-color), #4fc3f7);
+}
+
+.statusCard.serviceMfe {
+  background: linear-gradient(135deg, var(--warning-color), #ffb74d);
+}
+
+.statusCard.usersMfe {
+  background: linear-gradient(135deg, var(--success-color), #66bb6a);
+}
+
+.statusCard.storeMfe {
+  background: linear-gradient(135deg, var(--danger-color), #ef5350);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.cardIcon {
+  font-size: var(--font-size-xl);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.statusBadge.loaded {
+  background: rgba(76, 175, 80, 0.8);
+}
+
+.statusBadge.loading {
+  background: rgba(255, 152, 0, 0.8);
+  animation: pulse 1.5s infinite;
+}
+
+.statusBadge.error {
+  background: rgba(244, 67, 54, 0.8);
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.mfeSection {
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-lg);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--border-radius-md);
+  transition: all var(--transition-fast);
+}
+
+.mfeSection:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}

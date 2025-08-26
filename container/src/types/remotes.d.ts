@@ -45,6 +45,3 @@ declare module 'users_mfe/mount' {
   }): UsersMfeInstance;
 }
 
-declare module 'store_mfe/mount' {
-  export function mount(el: HTMLElement): void;
-}

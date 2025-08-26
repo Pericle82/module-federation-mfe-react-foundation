@@ -2,6 +2,20 @@
 import React from 'react';
 import { useUsers } from './useUsers';
 import { mountUtils } from './useMount';
+import {
+  MfeContainer,
+  MfeTitle,
+  StatusMessage,
+  UsersList,
+  UsersListItem,
+  UserInfo,
+  UserName,
+  UserEmail,
+  InputContainer,
+  Input,
+  Button,
+  RemoveButton,
+} from './components';
 
 type UsersMfeProps = {
   serviceApi?: any; // Service API with loaders, errors, and methods
@@ -21,47 +35,63 @@ const UsersMfeApp: React.FC<UsersMfeProps> = (props) => {
   } = useUsers({ serviceApi });
 
   return (
-    <div style={{ border: '2px solid #28a745', borderRadius: 8, padding: 16, margin: 16 }}>
-      <h2>Users Micro-Frontend</h2>
+    <MfeContainer>
+      <MfeTitle>
+        <span>👥</span>
+        Users Manager
+      </MfeTitle>
       
       {/* Loading states */}
-      {loaders.fetchUsers && <p style={{ color: 'blue' }}>Loading users...</p>}
-      {loaders.addUser && <p style={{ color: 'blue' }}>Adding user...</p>}
-      {loaders.removeUser && <p style={{ color: 'blue' }}>Removing user...</p>}
+      {loaders.fetchUsers && <StatusMessage variant="loading"><span>🔄</span> Loading users...</StatusMessage>}
+      {loaders.addUser && <StatusMessage variant="loading"><span>➕</span> Adding user...</StatusMessage>}
+      {loaders.removeUser && <StatusMessage variant="loading"><span>🗑️</span> Removing user...</StatusMessage>}
       
       {/* Error states */}
-      {errors.fetchUsers && <p style={{ color: 'red' }}>Error loading users: {errors.fetchUsers}</p>}
-      {errors.addUser && <p style={{ color: 'red' }}>Error adding user: {errors.addUser}</p>}
-      {errors.removeUser && <p style={{ color: 'red' }}>Error removing user: {errors.removeUser}</p>}
+      {errors.fetchUsers && <StatusMessage variant="error"><span>❌</span> Error loading users: {errors.fetchUsers}</StatusMessage>}
+      {errors.addUser && <StatusMessage variant="error"><span>❌</span> Error adding user: {errors.addUser}</StatusMessage>}
+      {errors.removeUser && <StatusMessage variant="error"><span>❌</span> Error removing user: {errors.removeUser}</StatusMessage>}
       
-      <ul>
+      <UsersList>
         {users?.map((user: any) => (
-          <li key={user.id}>
-            <strong>{user.name}</strong> - {user.email}
-            <button 
-              style={{ marginLeft: 8 }} 
+          <UsersListItem key={user.id}>
+            <UserInfo>
+              <UserName>👤 {user.name}</UserName>
+              {user.email && <UserEmail>✉️ {user.email}</UserEmail>}
+            </UserInfo>
+            <RemoveButton 
               onClick={() => handleRemove(user.id)}
               disabled={loaders.removeUser}
             >
-              Remove
-            </button>
-          </li>
+              🗑️ Remove
+            </RemoveButton>
+          </UsersListItem>
         ))}
-      </ul>
+        {(!users || users.length === 0) && (
+          <UsersListItem>
+            <UserInfo>
+              <span style={{ color: '#6c757d', fontStyle: 'italic' }}>
+                👥 No users found. Add some users to get started!
+              </span>
+            </UserInfo>
+          </UsersListItem>
+        )}
+      </UsersList>
       
-      <input
-        type="text"
-        value={newUser}
-        onChange={e => setNewUser(e.target.value)}
-        placeholder="New user name"
-      />
-      <button 
-        onClick={handleAdd} 
-        disabled={loaders.addUser || !newUser.trim()}
-      >
-        Add User
-      </button>
-    </div>
+      <InputContainer>
+        <Input
+          type="text"
+          value={newUser}
+          onChange={e => setNewUser(e.target.value)}
+          placeholder="Enter new user name..."
+        />
+        <Button 
+          onClick={handleAdd} 
+          disabled={loaders.addUser || !newUser.trim()}
+        >
+          ➕ Add User
+        </Button>
+      </InputContainer>
+    </MfeContainer>
   );
 };
 
