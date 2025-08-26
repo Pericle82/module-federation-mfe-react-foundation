@@ -30,6 +30,7 @@ const Mf2App: React.FC<Mf2AppProps> = (props) => {
     handleFilterChange,
     applyFilter,
     clearFilter,
+    notificationStats,
   } = useItemsFilter({ serviceApi });
 
   const getLoadingMessage = (operation: string) => {
@@ -47,7 +48,14 @@ const Mf2App: React.FC<Mf2AppProps> = (props) => {
 
   return (
     <MfeContainer>
-      <MfeTitle>🔍 Items Filter</MfeTitle>
+      <MfeTitle>
+        🔍 Items Filter
+        {notificationStats && (
+          <span style={{ fontSize: '12px', marginLeft: '10px', color: '#6c757d' }}>
+            👥 Users: {notificationStats.stats?.totalUsers || 0}
+          </span>
+        )}
+      </MfeTitle>
       
       {/* External loading state (from other MFEs) */}
       {externalLoading && (

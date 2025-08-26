@@ -15,7 +15,9 @@ export interface ServiceMfeApi {
   addUser: (user: any) => Promise<any[]>;
   removeUser: (id: string) => Promise<any[]>;
   // Event system for data synchronization with data type specificity
-  onDataChange: <T = any>(dataType: 'items' | 'users', callback: (data: T[]) => void) => () => void; // Returns unsubscribe function
+  onDataChange: <T = any>(dataType: 'items' | 'users' | 'notifications', callback: (data: T) => void) => () => void; // Returns unsubscribe function
+  // New: Allow MFEs to broadcast data changes
+  notifyDataChange: (dataType: 'items' | 'users' | 'notifications', data: any) => void;
   // New: Loading state notifications
   onLoadingChange: (dataType: 'items' | 'users', callback: (isLoading: boolean, operation?: string) => void) => () => void;
   loaders: {
@@ -46,6 +48,7 @@ const roots = new WeakMap<HTMLElement, ReturnType<typeof ReactDOM.createRoot>>()
 const dataChangeListeners = {
   items: new Set<(data: any[]) => void>(),
   users: new Set<(data: any[]) => void>(),
+  notifications: new Set<(data: any) => void>(),
 };
 
 // Global event system for loading state notifications
@@ -78,6 +81,20 @@ const notifyDataChange = async <T = any>(
     console.error(`Error getting latest ${dataType} for notification:`, error);
     // Make sure to notify loading end even if there's an error
     notifyLoadingChange(dataType, false, 'dataSync');
+  }
+};
+
+// New function for direct data broadcasting (used by notifications_mfe)
+const broadcastDataChange = (dataType: 'items' | 'users' | 'notifications', data: any) => {
+  const listeners = dataChangeListeners[dataType];
+  if (listeners) {
+    listeners.forEach(callback => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(`Error in ${dataType} data change listener:`, error);
+      }
+    });
   }
 };
 
@@ -211,12 +228,15 @@ export function mount({el}: ServiceMfeMountProps): ServiceMfeApi {
           notifyLoadingChange('users', false, 'removeUser');
         }
       },
-      onDataChange: <T = any>(dataType: 'items' | 'users', callback: (data: T[]) => void) => {
+      onDataChange: <T = any>(dataType: 'items' | 'users' | 'notifications', callback: (data: T) => void) => {
         dataChangeListeners[dataType].add(callback as any);
         // Return unsubscribe function
         return () => {
           dataChangeListeners[dataType].delete(callback as any);
         };
+      },
+      notifyDataChange: (dataType: 'items' | 'users' | 'notifications', data: any) => {
+        broadcastDataChange(dataType, data);
       },
       onLoadingChange: (dataType: 'items' | 'users', callback: (isLoading: boolean, operation?: string) => void) => {
         loadingChangeListeners[dataType].add(callback);
@@ -275,13 +295,16 @@ export function mount({el}: ServiceMfeMountProps): ServiceMfeApi {
       const api = await apiReady;
       return api.removeUser(i);
     },
-    onDataChange: <T = any>(dataType: 'items' | 'users', callback: (data: T[]) => void) => {
+    onDataChange: <T = any>(dataType: 'items' | 'users' | 'notifications', callback: (data: T) => void) => {
       const listeners = dataChangeListeners[dataType];
       listeners.add(callback as any);
       // Return unsubscribe function
       return () => {
         listeners.delete(callback as any);
       };
+    },
+    notifyDataChange: (dataType: 'items' | 'users' | 'notifications', data: any) => {
+      broadcastDataChange(dataType, data);
     },
     onLoadingChange: (dataType: 'items' | 'users', callback: (isLoading: boolean, operation?: string) => void) => {
       const listeners = loadingChangeListeners[dataType];

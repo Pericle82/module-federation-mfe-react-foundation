@@ -22,11 +22,13 @@ interface UseUsersReturn {
     removeUser: string | null;
     filterUsers: string | null;
   };
+  notificationStats: any; // NEW: Notification stats from notifications_mfe
 }
 
 export const useUsers = ({ serviceApi }: UseUsersProps): UseUsersReturn => {
   const [users, setUsers] = useState<any[]>([]);
   const [newUser, setNewUser] = useState("");
+  const [notificationStats, setNotificationStats] = useState<any>(null);
 
   // Fetch users when component mounts or serviceApi becomes available
   useEffect(() => {
@@ -54,6 +56,18 @@ export const useUsers = ({ serviceApi }: UseUsersProps): UseUsersReturn => {
     });
 
     return unsubscribe; // Cleanup subscription on unmount
+  }, [serviceApi]);
+
+  // NEW: Subscribe to notifications from notifications_mfe
+  useEffect(() => {
+    if (!serviceApi?.onDataChange) return;
+
+    const unsubscribe = serviceApi.onDataChange('notifications', (stats: any) => {
+      console.log('USERS_MFE received notification stats:', stats);
+      setNotificationStats(stats);
+    });
+
+    return unsubscribe;
   }, [serviceApi]);
 
   const handleAdd = useCallback(async () => {
@@ -102,5 +116,6 @@ export const useUsers = ({ serviceApi }: UseUsersProps): UseUsersReturn => {
     handleRemove,
     loaders,
     errors,
+    notificationStats, // NEW: Expose notification stats
   };
 };

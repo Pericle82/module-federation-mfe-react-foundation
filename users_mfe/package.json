@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/mount.tsx",
   "scripts": {
-    "start": "webpack serve --port 3005 --config webpack.config.js"
+    "start": "webpack serve --port 3004 --config webpack.config.js"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",

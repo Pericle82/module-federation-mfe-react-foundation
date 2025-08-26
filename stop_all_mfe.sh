@@ -38,7 +38,7 @@ if [[ -n "$PIDS" ]]; then
 fi
 
 # Clean up ports
-PORTS=(3000 3001 3002 3003 3005 4000)
+PORTS=(3000 3001 3002 3003 3004 3005 4000)
 for port in "${PORTS[@]}"; do
   PID=$(lsof -ti:$port 2>/dev/null || true)
   if [[ -n "$PID" ]]; then

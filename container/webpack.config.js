@@ -64,12 +64,13 @@ module.exports = {
   },
   plugins: [
     new ModuleFederationPlugin({
-      name: 'container',
+      name: 'container', // Force reload
       remotes: {
         mfe_1: 'mfe_1@http://localhost:3001/remoteEntry.js',
         mfe_2: 'mfe_2@http://localhost:3002/remoteEntry.js',
         service_mfe: 'service_mfe@http://localhost:3003/remoteEntry.js',
-        users_mfe: 'users_mfe@http://localhost:3005/remoteEntry.js'
+        users_mfe: 'users_mfe@http://localhost:3004/remoteEntry.js',
+        notifications_mfe: 'notifications_mfe@http://localhost:3005/remoteEntry.js'
       }
     }),
     new HtmlWebpackPlugin({

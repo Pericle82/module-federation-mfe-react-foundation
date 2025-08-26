@@ -22,11 +22,13 @@ interface UseItemsReturn {
     removeItem: string | null;
     filterItems: string | null;
   };
+  notificationStats: any; // NEW: Notification stats from notifications_mfe
 }
 
 export const useItems = ({ serviceApi }: UseItemsProps): UseItemsReturn => {
   const [items, setItems] = useState<any[]>([]);
   const [newItem, setNewItem] = useState("");
+  const [notificationStats, setNotificationStats] = useState<any>(null);
 
   // Fetch items when component mounts or serviceApi becomes available
   useEffect(() => {
@@ -54,6 +56,18 @@ export const useItems = ({ serviceApi }: UseItemsProps): UseItemsReturn => {
     });
 
     return unsubscribe; // Cleanup subscription on unmount
+  }, [serviceApi]);
+
+  // NEW: Subscribe to notifications from notifications_mfe
+  useEffect(() => {
+    if (!serviceApi?.onDataChange) return;
+
+    const unsubscribe = serviceApi.onDataChange('notifications', (stats: any) => {
+      console.log('MFE_1 received notification stats:', stats);
+      setNotificationStats(stats);
+    });
+
+    return unsubscribe;
   }, [serviceApi]);
 
   const handleAdd = useCallback(async () => {
@@ -102,5 +116,6 @@ export const useItems = ({ serviceApi }: UseItemsProps): UseItemsReturn => {
     handleRemove,
     loaders,
     errors,
+    notificationStats, // NEW: Expose notification stats
   };
 };

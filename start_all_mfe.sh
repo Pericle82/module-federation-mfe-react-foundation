@@ -17,7 +17,7 @@ echo "Starting Microfrontend services..."
 mkdir -p logs
 
 # Services in startup order
-SERVICES=("mock_json_server" "service_mfe" "mfe_1" "mfe_2" "users_mfe" "container")
+SERVICES=("mock_json_server" "service_mfe" "mfe_1" "mfe_2" "users_mfe" "notifications_mfe" "container")
 
 # Clean previous logs and PIDs
 rm -f logs/*.log logs/*.pid
@@ -38,9 +38,10 @@ done
 echo "All services started successfully!"
 echo ""
 echo "Service URLs:"
-echo "  Container:     http://localhost:3000"
-echo "  MFE_1:         http://localhost:3001"
-echo "  MFE_2:         http://localhost:3002"
-echo "  Service_MFE:   http://localhost:3003"
-echo "  Users_MFE:     http://localhost:3005"
-echo "  JSON Server:   http://localhost:4000"
+echo "  Container:        http://localhost:3000"
+echo "  MFE_1:            http://localhost:3001"
+echo "  MFE_2:            http://localhost:3002"
+echo "  Service_MFE:      http://localhost:3003"
+echo "  Users_MFE:        http://localhost:3004"
+echo "  Notifications:    http://localhost:3005"
+echo "  JSON Server:      http://localhost:4000"

@@ -53,7 +53,7 @@ module.exports = {
     }),
   ],
   devServer: {
-    port: 3005,
+    port: 3004,
     hot: true,
     headers: {
       'Access-Control-Allow-Origin': '*',

@@ -8,6 +8,7 @@ const moduleLoaders = {
   'mfe_2/mount': () => import(/* webpackChunkName: "mfe_2" */ 'mfe_2/mount'),
   'service_mfe/mount': () => import(/* webpackChunkName: "service_mfe" */ 'service_mfe/mount'),
   'users_mfe/mount': () => import(/* webpackChunkName: "users_mfe" */ 'users_mfe/mount'),
+  'notifications_mfe/mount': () => import(/* webpackChunkName: "notifications_mfe" */ 'notifications_mfe/mount'),
 } as const;
 
 export type MicrofrontendModuleName = keyof typeof moduleLoaders;

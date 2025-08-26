@@ -32,6 +32,7 @@ const UsersMfeApp: React.FC<UsersMfeProps> = (props) => {
     handleRemove,
     loaders,
     errors,
+    notificationStats,
   } = useUsers({ serviceApi });
 
   return (
@@ -39,6 +40,11 @@ const UsersMfeApp: React.FC<UsersMfeProps> = (props) => {
       <MfeTitle>
         <span>👥</span>
         Users Manager
+        {notificationStats && (
+          <span style={{ fontSize: '12px', marginLeft: '10px', color: '#6c757d' }}>
+            📊 Items: {notificationStats.stats?.totalItems || 0}
+          </span>
+        )}
       </MfeTitle>
       
       {/* Loading states */}

@@ -29,11 +29,19 @@ const Mfe1App: React.FC<MF1props> = (props) => {
     handleRemove,
     loaders,
     errors,
+    notificationStats,
   } = useItems({ serviceApi });
 
   return (
     <MfeContainer>
-      <MfeTitle>📦 Items Manager</MfeTitle>
+      <MfeTitle>
+        📦 Items Manager
+        {notificationStats && (
+          <span style={{ fontSize: '12px', marginLeft: '10px', color: '#6c757d' }}>
+            👥 Users: {notificationStats.stats?.totalUsers || 0}
+          </span>
+        )}
+      </MfeTitle>
       
       {/* Loading states */}
       {loaders.fetchItems && <StatusMessage variant="loading">🔄 Loading items...</StatusMessage>}

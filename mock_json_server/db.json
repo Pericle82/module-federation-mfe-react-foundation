@@ -1,37 +1,53 @@
 {
   "items": [
     {
-      "name": "sadfasdfasdfasdfasdf",
-      "id": 19
-    },
-    {
-      "name": "asdfasdf",
-      "id": 20
+      "name": "Test Item Cross-MFE",
+      "id": 23
     },
     {
       "name": "test",
-      "id": 21
+      "id": 24
     },
     {
-      "name": "test 2",
-      "id": 22
+      "name": "testet",
+      "id": 25
     }
   ],
   "users": [
     {
-      "name": "Bob Johnson",
-      "email": "bob@example.com",
-      "id": 3
-    },
-    {
-      "name": "add",
-      "email": "add@example.com",
-      "id": 5
-    },
-    {
       "name": "test user",
       "email": "testuser@example.com",
       "id": 6
+    },
+    {
+      "name": "TestUser Bidirectional",
+      "email": "testuser@bidirectional.com",
+      "id": 7
+    },
+    {
+      "name": "test",
+      "email": "test@example.com",
+      "id": 8
+    },
+    {
+      "name": "jhgf",
+      "email": "jhgf@example.com",
+      "id": 9
+    },
+    {
+      "name": "testete",
+      "email": "testete@example.com",
+      "id": 10
+    },
+    {
+      "name": "testat",
+      "email": "testat@example.com",
+      "id": 11
+    },
+    {
+      "name": "asdff",
+      "email": "asdff@example.com",
+      "id": 12
     }
   ]
 }

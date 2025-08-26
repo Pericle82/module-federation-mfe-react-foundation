@@ -14,6 +14,7 @@ export interface UseItemsFilterReturn {
   handleFilterChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   applyFilter: () => void;
   clearFilter: () => void;
+  notificationStats: any; // NEW: Notification stats from notifications_mfe
 }
 
 export const useItemsFilter = ({ serviceApi }: UseItemsFilterProps): UseItemsFilterReturn => {
@@ -23,6 +24,7 @@ export const useItemsFilter = ({ serviceApi }: UseItemsFilterProps): UseItemsFil
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const [externalLoading, setExternalLoading] = useState(false); // Loading state from external operations
   const [loadingOperation, setLoadingOperation] = useState<string>(""); // Track which operation is loading
+  const [notificationStats, setNotificationStats] = useState<any>(null);
 
   // Fetch items when component mounts or serviceApi becomes available
   useEffect(() => {
@@ -77,6 +79,18 @@ export const useItemsFilter = ({ serviceApi }: UseItemsFilterProps): UseItemsFil
     return unsubscribe; // Cleanup subscription on unmount
   }, [serviceApi, currentFilter]);
 
+  // NEW: Subscribe to notifications from notifications_mfe
+  useEffect(() => {
+    if (!serviceApi?.onDataChange) return;
+
+    const unsubscribe = serviceApi.onDataChange('notifications', (stats: any) => {
+      console.log('MFE_2 received notification stats:', stats);
+      setNotificationStats(stats);
+    });
+
+    return unsubscribe;
+  }, [serviceApi]);
+
   const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value);
   }, []);
@@ -114,6 +128,7 @@ export const useItemsFilter = ({ serviceApi }: UseItemsFilterProps): UseItemsFil
     loadingOperation,
     handleFilterChange,
     applyFilter,
-    clearFilter
+    clearFilter,
+    notificationStats, // NEW: Expose notification stats
   };
 };

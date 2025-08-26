@@ -45,3 +45,13 @@ declare module 'users_mfe/mount' {
   }): UsersMfeInstance;
 }
 
+declare module 'notifications_mfe/mount' {
+  type NotificationsMfeInstance = {
+    unmount?: () => void;
+  };
+  export function mount(options: {
+    el: HTMLElement;
+    serviceApi?: any;
+  }): NotificationsMfeInstance;
+}
+
