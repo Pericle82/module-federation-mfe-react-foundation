@@ -1,3 +1,5 @@
+/mock_json_server/db.json
+
 # Dependencies
 node_modules/
 npm-debug.log*
