@@ -7,7 +7,8 @@ SERVICES=(
   "MFE_1:http://localhost:3001/remoteEntry.js"
   "MFE_2:http://localhost:3002/remoteEntry.js" 
   "Service_MFE:http://localhost:3003/remoteEntry.js"
-  "Users_MFE:http://localhost:3005/remoteEntry.js"
+  "Users_MFE:http://localhost:3004/remoteEntry.js"
+  "Notifications_MFE:http://localhost:3005/remoteEntry.js"
   "JSON_Server:http://localhost:4000/items"
 )
 

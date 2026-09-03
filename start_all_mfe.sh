@@ -30,7 +30,9 @@ for service in "${SERVICES[@]}"; do
   fi
   
   ( cd "$service" && npm install --silent )
-  ( cd "$service" && npm start > "../logs/${service}.log" 2>&1 & )
+  # NB: il & deve stare nello stesso shell in cui leggiamo $!, altrimenti
+  # $! resta vuoto e i file .pid risultano inutilizzabili per stop_all_mfe.sh
+  ( cd "$service" && exec npm start ) > "logs/${service}.log" 2>&1 &
   echo $! > "logs/${service}.pid"
   sleep 2
 done

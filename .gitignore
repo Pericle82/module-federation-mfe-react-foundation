@@ -84,7 +84,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+# NB: "public" NON e ignorato: contiene i template index.html usati da HtmlWebpackPlugin
 
 # Storybook build outputs
 .out

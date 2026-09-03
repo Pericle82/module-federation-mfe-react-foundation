@@ -1,134 +1,89 @@
-# 🏗️ Modern Microfrontend Architecture
+# Micro-frontend con Webpack Module Federation
 
-> Event-driven microfrontend system with React 18, TypeScript, Styled Components and Module Federation
+POC di architettura a micro-frontend: 5 app React indipendenti orchestrate da un host, che
+comunicano fra loro **solo** attraverso un servizio headless (`service_mfe`) che fa da data layer
+e da bus eventi.
 
-## 🚀 Quick Start
+📖 **[COMPREHENSIVE_GUIDE.md](COMPREHENSIVE_GUIDE.md)** — la documentazione vera. In particolare:
+[com'è cablata la Module Federation](COMPREHENSIVE_GUIDE.md#3-module-federation-comè-implementata) ·
+[bus eventi, sottoscrizioni e stato](COMPREHENSIVE_GUIDE.md#5-il-bus-eventi-sottoscrizione-e-interazione-con-lo-stato) ·
+[flusso dati](COMPREHENSIVE_GUIDE.md#6-il-flusso-dati-passo-per-passo) ·
+[anomalie note](COMPREHENSIVE_GUIDE.md#10-anomalie-note)
 
-```bash
-# Start all services (recommended for first run)
-./start_all_mfe.sh --clean --check
-
-# Quick restart (skip dependencies install)  
-./start_all_mfe.sh --fast
-
-# Check service health
-./check_mfe_endpoints.sh --detailed
-
-# Stop all services
-./stop_all_mfe.sh --force
-```
-
-**Main App**: http://localhost:3000
-
-## 🏛️ Architecture
-
-### Services
-| Service | Port | Purpose | Key Features |
-|---------|------|---------|--------------|
-| 🌐 Container | 3000 | App orchestrator | Module Federation, CSS Modules |
-| 📦 MFE_1 | 3001 | Items CRUD | Styled Components, Real-time updates |
-| 🔍 MFE_2 | 3002 | Items filtering | Loading awareness, Advanced UI |
-| 🔧 Service_MFE | 3003 | API + Events | Central event hub, Type-safe |
-| 👥 Users_MFE | 3005 | Users management | Modern UI, Error handling |
-| 🏪 Store_MFE | 3004 | Redux state | RTK, Global state |
-| 🗄️ JSON Server | 4000 | Mock API | CORS, Delay simulation |
-
-### 🎯 Key Features
-- **Event-driven sync** - Real-time cross-MFE communication
-- **Loading notifications** - Operation-aware UI feedback  
-- **Styled Components** - Theme-based design system
-- **TypeScript** - Full type safety
-- **Error boundaries** - Robust error handling
-- **Responsive design** - Mobile-first approach
-
-## 🔄 Event System
-
-```typescript
-// Subscribe to data changes
-const unsubscribe = serviceApi.onDataChange('items', (items) => {
-  setItems(items); // Auto-sync across MFEs
-});
-
-// Subscribe to loading states  
-const unsubscribeLoading = serviceApi.onLoadingChange('items', (isLoading, operation) => {
-  setExternalLoading(isLoading); // Show loading in other MFEs
-});
-```
-
-## 🎨 Design System
-
-### Shared Theme
-```typescript
-const theme = {
-  colors: { primary: '#764ba2', success: '#28a745', ... },
-  spacing: { xs: '4px', sm: '8px', md: '16px', ... },
-  typography: { fontFamily: 'system-ui', ... }
-}
-```
-
-### Styled Components
-- **MFE_1**: Purple theme (Items)
-- **MFE_2**: Blue theme (Filter)  
-- **Users_MFE**: Green theme (Users)
-- **Container**: CSS Modules
-
-## 🛠️ Development
-
-### Scripts
-```bash
-# Development workflow
-./start_all_mfe.sh --clean    # Clean install + start
-./check_mfe_endpoints.sh      # Health check
-./stop_all_mfe.sh            # Stop all services
-
-# Options
---clean   # Remove node_modules
---fast    # Skip npm install
---check   # Auto health check
---force   # Force kill processes
-```
-
-### Custom Hooks
-```typescript
-// Business logic separation
-const { items, handleAdd, loaders } = useItems({ serviceApi });
-const { users, handleRemove } = useUsers({ serviceApi });
-const { filteredItems, externalLoading } = useItemsFilter({ serviceApi });
-```
-
-## 🔍 Monitoring
+## Avvio
 
 ```bash
-# Real-time logs
-tail -f logs/mfe_1.log
-tail -f logs/service_mfe.log
+./start_all_mfe.sh          # installa e avvia tutto (log in logs/)
+./start_all_mfe.sh --clean  # rimuove prima node_modules e package-lock.json
 
-# JSON output for automation
-./check_mfe_endpoints.sh --json
+./check_mfe_endpoints.sh    # health check di tutti gli endpoint
+./stop_all_mfe.sh           # stop (--force per SIGKILL)
 ```
 
-## 📁 Project Structure
+App: **http://localhost:3000**
 
+## Servizi
+
+| Servizio | Porta | Ruolo | Ruolo MF |
+|---|---|---|---|
+| `container` | 3000 | Orchestra mount/unmount dei remote | host |
+| `mfe_1` | 3001 | CRUD items | remote |
+| `mfe_2` | 3002 | Filtro items, mostra il loading causato dagli altri MFE | remote |
+| `service_mfe` | 3003 | Chiamate HTTP + bus eventi (nessuna UI) | remote |
+| `users_mfe` | 3004 | CRUD users | remote |
+| `notifications_mfe` | 3005 | Statistiche aggregate e activity feed | remote |
+| `mock_json_server` | 4000 | REST finto su `db.json` | — |
+
+## Come sono collegati
+
+Ogni remote espone **un solo modulo**, `./mount`. L'host lo dichiara in `remotes` e lo carica a
+runtime scaricando `remoteEntry.js` dalla porta del remote:
+
+```js
+// container/webpack.config.js          // mfe_1/webpack.config.js
+remotes: {                              exposes: { './mount': './src/mount.tsx' }
+  mfe_1: 'mfe_1@http://localhost:3001/remoteEntry.js'
+}                                       // → l'host scrive: import('mfe_1/mount')
 ```
-├── container/          # Main app (Module Federation host)
-├── mfe_1/             # Items CRUD + Styled Components  
-├── mfe_2/             # Items filter + Loading awareness
-├── service_mfe/       # API layer + Event system
-├── users_mfe/         # Users CRUD + Modern UI
-├── store_mfe/         # Redux Toolkit state
-├── mock_json_server/  # REST API backend
-└── *.sh               # Management scripts
+
+Dettagli — async boundary, share scope, i tre file da tenere allineati nell'host — in
+[§ 3 della guida](COMPREHENSIVE_GUIDE.md#3-module-federation-comè-implementata).
+
+## Come comunicano
+
+Nessun micro-frontend importa un altro micro-frontend. Il container monta `service_mfe`, ne
+riceve l'oggetto `serviceApi` e lo passa come parametro a tutti gli altri. Ogni MFE legge una
+volta in **pull** e poi resta aggiornato in **push**:
+
+```ts
+// pull iniziale
+useEffect(() => { serviceApi?.fetchItems().then(setItems); }, [serviceApi]);
+
+// push continuo — onDataChange ritorna la unsubscribe, usata come cleanup
+useEffect(() => {
+  if (!serviceApi?.onDataChange) return;
+  return serviceApi.onDataChange('items', setItems);
+}, [serviceApi]);
 ```
 
-## 🏆 Architecture Benefits
+Quando `mfe_1` aggiunge un item, `service_mfe` scrive sul backend, ri-legge la lista e la
+ridistribuisce sul canale `items`: `mfe_1`, `mfe_2` e `notifications_mfe` si aggiornano insieme.
+`notifications_mfe` ripubblica poi le statistiche aggregate sul canale `notifications`, che gli
+altri tre mostrano nella propria intestazione — da cui la sincronizzazione bidirezionale.
 
-- ✅ **Loose coupling** - MFEs communicate via events, not direct imports
-- ✅ **Scalability** - Add new MFEs without touching existing code
-- ✅ **Maintainability** - Each MFE has isolated dependencies
-- ✅ **Developer experience** - Type-safe, modern tooling
-- ✅ **User experience** - Real-time updates, loading states
-- ✅ **Performance** - Code splitting, selective loading
+Canali: `items`, `users`, `notifications` (dati) e `items`, `users` (stato di caricamento).
+Meccanica completa — dove vivono i listener, closure e array di dipendenze, cosa attraversa il
+bus — in [§ 5 della guida](COMPREHENSIVE_GUIDE.md#5-il-bus-eventi-sottoscrizione-e-interazione-con-lo-stato).
 
----
+## Stack
 
-*Built with ❤️ using React 18, TypeScript, Webpack 5 Module Federation, and Styled Components*
+React 18 · TypeScript · Webpack 5 Module Federation · styled-components (nei remote) ·
+CSS Modules (nel container) · json-server
+
+## Stato
+
+Il flusso end-to-end è verificato e funzionante
+([§ 11 della guida](COMPREHENSIVE_GUIDE.md#11-verifica-eseguita)). Restano alcuni difetti noti —
+loaders/errori locali non reattivi, React non condiviso fra host e remote, suite di test non
+eseguibile, codice morto — elencati con il fix consigliato in
+[§ 10](COMPREHENSIVE_GUIDE.md#10-anomalie-note).
