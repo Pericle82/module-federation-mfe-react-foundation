@@ -25,8 +25,10 @@ const NotificationsMfeApp: React.FC<NotificationsMfeProps> = (props) => {
     switch (type) {
       case 'user_added': return '👤➕';
       case 'user_removed': return '👤➖';
+      case 'user_updated': return '👤✏️';
       case 'item_added': return '📦➕';
       case 'item_removed': return '📦➖';
+      case 'item_updated': return '📦✏️';
       default: return '📢';
     }
   };
