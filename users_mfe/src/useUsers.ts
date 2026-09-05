@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseUsersProps {
   serviceApi?: any;
@@ -30,13 +30,21 @@ export const useUsers = ({ serviceApi }: UseUsersProps): UseUsersReturn => {
   const [newUser, setNewUser] = useState("");
   const [notificationStats, setNotificationStats] = useState<any>(null);
 
+  // Set as soon as a broadcast delivers users, so a slower initial fetch knows
+  // its result is already stale and must not overwrite the newer data.
+  const gotBroadcastRef = useRef(false);
+
   // Fetch users when component mounts or serviceApi becomes available
   useEffect(() => {
+    // Guard against setting state after unmount (or after serviceApi changed).
+    let cancelled = false;
+    gotBroadcastRef.current = false;
+
     const fetchUsers = async () => {
       if (serviceApi?.fetchUsers) {
         try {
           const result = await serviceApi.fetchUsers();
-          setUsers(result);
+          if (!cancelled && !gotBroadcastRef.current) setUsers(result);
         } catch (error) {
           console.error('Failed to fetch users:', error);
         }
@@ -44,6 +52,8 @@ export const useUsers = ({ serviceApi }: UseUsersProps): UseUsersReturn => {
     };
 
     fetchUsers();
+
+    return () => { cancelled = true; };
   }, [serviceApi]);
 
   // Subscribe to data changes - specifically listen to 'users' data type
@@ -52,6 +62,7 @@ export const useUsers = ({ serviceApi }: UseUsersProps): UseUsersReturn => {
 
     const unsubscribe = serviceApi.onDataChange('users', (updatedUsers: any[]) => {
       console.log('USERS_MFE received users data change notification:', updatedUsers);
+      gotBroadcastRef.current = true;
       setUsers(updatedUsers);
     });
 

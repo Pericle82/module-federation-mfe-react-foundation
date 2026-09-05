@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseItemsProps {
   serviceApi?: any;
@@ -30,13 +30,21 @@ export const useItems = ({ serviceApi }: UseItemsProps): UseItemsReturn => {
   const [newItem, setNewItem] = useState("");
   const [notificationStats, setNotificationStats] = useState<any>(null);
 
+  // Set as soon as a broadcast delivers items, so a slower initial fetch knows
+  // its result is already stale and must not overwrite the newer data.
+  const gotBroadcastRef = useRef(false);
+
   // Fetch items when component mounts or serviceApi becomes available
   useEffect(() => {
+    // Guard against setting state after unmount (or after serviceApi changed).
+    let cancelled = false;
+    gotBroadcastRef.current = false;
+
     const fetchItems = async () => {
       if (serviceApi?.fetchItems) {
         try {
           const result = await serviceApi.fetchItems();
-          setItems(result);
+          if (!cancelled && !gotBroadcastRef.current) setItems(result);
         } catch (error) {
           console.error('Failed to fetch items:', error);
         }
@@ -44,6 +52,8 @@ export const useItems = ({ serviceApi }: UseItemsProps): UseItemsReturn => {
     };
 
     fetchItems();
+
+    return () => { cancelled = true; };
   }, [serviceApi]);
 
   // Subscribe to data changes - specifically listen to 'items' data type
@@ -52,6 +62,7 @@ export const useItems = ({ serviceApi }: UseItemsProps): UseItemsReturn => {
 
     const unsubscribe = serviceApi.onDataChange('items', (updatedItems: any[]) => {
       console.log('MFE_1 received items data change notification:', updatedItems);
+      gotBroadcastRef.current = true;
       setItems(updatedItems);
     });
 

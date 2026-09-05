@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseItemsFilterProps {
   serviceApi?: any;
@@ -26,12 +26,21 @@ export const useItemsFilter = ({ serviceApi }: UseItemsFilterProps): UseItemsFil
   const [loadingOperation, setLoadingOperation] = useState<string>(""); // Track which operation is loading
   const [notificationStats, setNotificationStats] = useState<any>(null);
 
+  // Set as soon as a broadcast delivers items, so a slower initial fetch knows
+  // its result is already stale and must not overwrite the newer data.
+  const gotBroadcastRef = useRef(false);
+
   // Fetch items when component mounts or serviceApi becomes available
   useEffect(() => {
+    // Guard against setting state after unmount (or after serviceApi changed).
+    let cancelled = false;
+    gotBroadcastRef.current = false;
+
     const fetchItems = async () => {
       if (serviceApi?.fetchItems) {
         try {
           const result = await serviceApi.fetchItems();
+          if (cancelled || gotBroadcastRef.current) return;
           setItems(result);
           setFilteredItems(result);
         } catch (error) {
@@ -41,6 +50,8 @@ export const useItemsFilter = ({ serviceApi }: UseItemsFilterProps): UseItemsFil
     };
 
     fetchItems();
+
+    return () => { cancelled = true; };
   }, [serviceApi]);
 
   // Subscribe to loading state changes from external operations
@@ -62,6 +73,7 @@ export const useItemsFilter = ({ serviceApi }: UseItemsFilterProps): UseItemsFil
 
     const unsubscribe = serviceApi.onDataChange('items', (updatedItems: any[]) => {
       console.log('MFE_2 received items data change notification:', updatedItems);
+      gotBroadcastRef.current = true;
       setItems(updatedItems);
       
       // If no filter is active, show all items

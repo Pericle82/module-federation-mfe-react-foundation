@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseNotificationsProps {
   serviceApi?: any;
@@ -26,13 +26,19 @@ export const useNotifications = ({ serviceApi }: UseNotificationsProps) => {
   });
   const [activities, setActivities] = useState<ActivityItem[]>([]);
 
+  // Set per data type as soon as a broadcast arrives, so the slower initial
+  // load does not overwrite the fresher counters with its own stale ones.
+  const gotUsersBroadcastRef = useRef(false);
+  const gotItemsBroadcastRef = useRef(false);
+
   // Subscribe to all data changes and create activity notifications
   useEffect(() => {
     if (!serviceApi?.onDataChange) return;
 
     const unsubscribeUsers = serviceApi.onDataChange('users', (updatedUsers: any[]) => {
       console.log('NOTIFICATIONS_MFE received users change:', updatedUsers);
-      
+
+      gotUsersBroadcastRef.current = true;
       setStats(prev => ({
         ...prev,
         totalUsers: updatedUsers.length,
@@ -54,7 +60,8 @@ export const useNotifications = ({ serviceApi }: UseNotificationsProps) => {
 
     const unsubscribeItems = serviceApi.onDataChange('items', (updatedItems: any[]) => {
       console.log('NOTIFICATIONS_MFE received items change:', updatedItems);
-      
+
+      gotItemsBroadcastRef.current = true;
       setStats(prev => ({
         ...prev,
         totalItems: updatedItems.length,
@@ -82,6 +89,11 @@ export const useNotifications = ({ serviceApi }: UseNotificationsProps) => {
 
   // Initial data load
   useEffect(() => {
+    // Guard against setting state after unmount (or after serviceApi changed).
+    let cancelled = false;
+    gotUsersBroadcastRef.current = false;
+    gotItemsBroadcastRef.current = false;
+
     const loadInitialData = async () => {
       if (serviceApi?.fetchUsers && serviceApi?.fetchItems) {
         try {
@@ -89,14 +101,17 @@ export const useNotifications = ({ serviceApi }: UseNotificationsProps) => {
             serviceApi.fetchUsers(),
             serviceApi.fetchItems()
           ]);
-          
-          setStats({
-            totalUsers: users.length,
-            totalItems: items.length,
-            recentActivity: 0
-          });
 
-          // Add initial activity
+          if (cancelled) return;
+
+          // Keep any counter a broadcast already refreshed while we were loading.
+          setStats(prev => ({
+            totalUsers: gotUsersBroadcastRef.current ? prev.totalUsers : users.length,
+            totalItems: gotItemsBroadcastRef.current ? prev.totalItems : items.length,
+            recentActivity: prev.recentActivity
+          }));
+
+          // Add initial activity, keeping anything the listeners already recorded
           const initialActivity: ActivityItem = {
             id: `init-${Date.now()}`,
             type: 'item_added',
@@ -104,7 +119,7 @@ export const useNotifications = ({ serviceApi }: UseNotificationsProps) => {
             timestamp: new Date().toLocaleTimeString(),
             source: 'System'
           };
-          setActivities([initialActivity]);
+          setActivities(prev => [...prev, initialActivity].slice(0, 10));
         } catch (error) {
           console.error('Failed to load initial data:', error);
         }
@@ -112,6 +127,8 @@ export const useNotifications = ({ serviceApi }: UseNotificationsProps) => {
     };
 
     loadInitialData();
+
+    return () => { cancelled = true; };
   }, [serviceApi]);
 
   // Broadcast aggregated stats back to other MFEs
