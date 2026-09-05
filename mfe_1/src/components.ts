@@ -1,3 +1,6 @@
+// Presentational styled-components for mfe_1, built on the local `theme`.
+// Private to the remote: only ./mount is exposed over Module Federation, so
+// nothing here can be imported by the host or by another MFE.
 import styled from 'styled-components';
 import { theme } from './theme';
 

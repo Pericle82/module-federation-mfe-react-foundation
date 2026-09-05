@@ -1,9 +1,7 @@
-// Common microfrontend utilities
+// Barrel for the host-side micro-frontend plumbing, so wrappers can import
+// from './hooks'.
 export { useMicrofrontend } from './useMicrofrontend';
 export type { MicrofrontendHookOptions, MicrofrontendInstance } from './useMicrofrontend';
-
-export { createMicrofrontendComponent, GenericMicrofrontend } from './createMicrofrontendComponent';
-export type { MicrofrontendWrapperProps, GenericMicrofrontendProps } from './createMicrofrontendComponent';
 
 export { loadMicrofrontendModule, isValidModuleName } from './moduleLoader';
 export type { MicrofrontendModuleName } from './moduleLoader';

@@ -1,3 +1,5 @@
+// Remote webpack config - items CRUD, served on :3001 (port comes from the npm
+// start script). See COMPREHENSIVE_GUIDE.md § 3.1.
 const path = require('path');
 const { ModuleFederationPlugin } = require('webpack').container;
 
@@ -6,6 +8,8 @@ module.exports = {
   mode: 'development',
   devtool: 'eval-source-map', // Enable proper source maps for debugging
   output: {
+    // Required so this remote's own chunks are fetched from :3001 and not from
+    // the host's origin (§ 3.1).
     publicPath: 'auto',
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
@@ -40,6 +44,15 @@ module.exports = {
     ],
   },
   plugins: [
+    // REMOTE side of Module Federation (§ 3.1):
+    //   name      -> the global the entry script defines (window.<name>) and
+    //                the left half of the host's `remotes` entry;
+    //   filename  -> served at http://<host>:<port>/remoteEntry.js;
+    //   exposes   -> the only public modules; the key is concatenated to the
+    //                remote name, so './mount' is imported as '<name>/mount'.
+    //                Everything else in src/ stays private to this remote.
+    //   shared    -> React must be a singleton, otherwise hooks break across
+    //                the boundary (§ 3.5, § A.3).
     new ModuleFederationPlugin({
       name: 'mfe_1',
       filename: 'remoteEntry.js',

@@ -1,3 +1,5 @@
+// Presentational styled-components for users_mfe, built on the local `theme`.
+// Private to the remote (only ./mount is exposed).
 import styled from 'styled-components';
 import { theme } from './theme';
 

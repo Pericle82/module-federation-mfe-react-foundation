@@ -1,3 +1,15 @@
+/**
+ * Mount/unmount plumbing shared by this remote's mount.tsx.
+ *
+ * Roots are cached in a WeakMap keyed by the host element (COMPREHENSIVE_GUIDE.md
+ * § 7): remounting on the same <div> reuses the existing root instead of
+ * creating a second one on the same container, which React rejects. WeakMap
+ * rather than Map so a discarded element is not kept alive by this cache.
+ *
+ * `unmount()` tears down the React tree, which runs every useEffect cleanup in
+ * the remote and therefore every bus unsubscribe (§ 5.2).
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -30,14 +42,4 @@ export const mountUtils = {
       roots.delete(el);
     }
   }
-};
-
-// Factory to create mount functions for MFEs
-export const createMountFunction = <T extends { el: HTMLElement }>(
-  Component: React.ComponentType<Omit<T, 'el'>>
-) => {
-  return (props: T) => {
-    const { el, ...componentProps } = props;
-    return mountUtils.render(el, React.createElement(Component, componentProps as Omit<T, 'el'>));
-  };
 };

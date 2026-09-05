@@ -1,3 +1,14 @@
+/**
+ * Design tokens for this remote's styled-components.
+ *
+ * NOTE (COMPREHENSIVE_GUIDE.md § 8): this file is duplicated byte for byte in
+ * mfe_1, mfe_2 and users_mfe. Nothing shares it, and that is the deliberate
+ * trade-off of the architecture - a remote must be buildable and deployable on
+ * its own, so it carries its own copy rather than importing from a sibling.
+ * Sharing it would mean either a published npm package or a `shared` entry in
+ * Module Federation, neither of which this project sets up.
+ */
+
 export const theme = {
   colors: {
     primary: '#764ba2',

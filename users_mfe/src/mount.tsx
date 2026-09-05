@@ -1,3 +1,11 @@
+/**
+ * users_mfe - public module of the users CRUD remote
+ * (COMPREHENSIVE_GUIDE.md § 4.1).
+ *
+ * Structurally identical to mfe_1, on the `users` channel instead of `items`.
+ * The two never talk to each other: what keeps them consistent is the bus in
+ * service_mfe.
+ */
 
 import React from 'react';
 import { useUsers } from './useUsers';
@@ -40,6 +48,8 @@ const UsersMfeApp: React.FC<UsersMfeProps> = (props) => {
       <MfeTitle>
         <span>👥</span>
         Users Manager
+        {/* The items count comes from notifications_mfe over the
+            'notifications' channel (§ 5.8) - this remote never reads /items. */}
         {notificationStats && (
           <span style={{ fontSize: '12px', marginLeft: '10px', color: '#6c757d' }}>
             📊 Items: {notificationStats.stats?.totalItems || 0}
@@ -47,6 +57,9 @@ const UsersMfeApp: React.FC<UsersMfeProps> = (props) => {
         )}
       </MfeTitle>
       
+      {/* KNOWN ISSUE (§ 10.1): same as mfe_1 - `loaders`/`errors` are
+          snapshots with no subscription behind them, so these banners never
+          appear. users_mfe has no `onLoadingChange` equivalent either (§ 10.7). */}
       {/* Loading states */}
       {loaders.fetchUsers && <StatusMessage variant="loading"><span>🔄</span> Loading users...</StatusMessage>}
       {loaders.addUser && <StatusMessage variant="loading"><span>➕</span> Adding user...</StatusMessage>}

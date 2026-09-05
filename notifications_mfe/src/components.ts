@@ -1,3 +1,9 @@
+// Presentational styled-components for notifications_mfe. Private to the
+// remote (only ./mount is exposed).
+//
+// Unlike the other three remotes this one has no theme.ts: values are inlined,
+// and it pulls styled-components v5 while the others use v6 - which is why the
+// console warns about "several instances of styled-components" (§ 8).
 import styled from 'styled-components';
 
 export const NotificationContainer = styled.div`
@@ -74,25 +80,3 @@ export const ActivityTime = styled.span`
   margin-left: auto;
 `;
 
-export const StatusMessage = styled.div<{ variant?: 'loading' | 'error' | 'success' }>`
-  padding: 10px 15px;
-  border-radius: 4px;
-  margin: 10px 0;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  ${props => {
-    switch (props.variant) {
-      case 'loading':
-        return 'background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;';
-      case 'error':
-        return 'background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;';
-      case 'success':
-        return 'background: #e8f5e8; color: #2e7d32; border: 1px solid #c8e6c9;';
-      default:
-        return 'background: #f5f5f5; color: #424242; border: 1px solid #e0e0e0;';
-    }
-  }}
-`;

@@ -1,3 +1,14 @@
+/**
+ * mfe_1 - the one and only public module of this remote
+ * (COMPREHENSIVE_GUIDE.md § 4.1).
+ *
+ * `exposes: { './mount': './src/mount.tsx' }` in webpack.config.js makes this
+ * file - and nothing else here - reachable from the host as `mfe_1/mount`.
+ * useItems.ts, components.ts and theme.ts stay private to the remote.
+ *
+ * The contract is one function: `mount({ el, serviceApi })` renders this app
+ * into the host's <div> on its own React root, and returns `{ unmount }`.
+ */
 
 import React from 'react';
 import { useItems } from './useItems';
@@ -18,6 +29,8 @@ type MF1props = {
   serviceApi?: any; // Service API with loaders, errors, and methods
 };
 
+// Presentation only: every piece of state and behaviour comes from useItems,
+// which is where the bus wiring lives.
 const Mfe1App: React.FC<MF1props> = (props) => {
   const { serviceApi } = props;
   
@@ -36,6 +49,8 @@ const Mfe1App: React.FC<MF1props> = (props) => {
     <MfeContainer>
       <MfeTitle>
         📦 Items Manager
+        {/* Data owned by another MFE, received over the 'notifications'
+            channel (§ 5.8) - never fetched directly from here. */}
         {notificationStats && (
           <span style={{ fontSize: '12px', marginLeft: '10px', color: '#6c757d' }}>
             👥 Users: {notificationStats.stats?.totalUsers || 0}
@@ -43,6 +58,9 @@ const Mfe1App: React.FC<MF1props> = (props) => {
         )}
       </MfeTitle>
       
+      {/* KNOWN ISSUE (§ 10.1): `loaders`/`errors` are non-reactive snapshots of
+          service_mfe's internal state, so none of these banners ever renders.
+          The working pattern is mfe_2's `onLoadingChange` subscription. */}
       {/* Loading states */}
       {loaders.fetchItems && <StatusMessage variant="loading">🔄 Loading items...</StatusMessage>}
       {loaders.addItem && <StatusMessage variant="loading">➕ Adding item...</StatusMessage>}
@@ -93,6 +111,7 @@ interface mf1MountProps {
 
 // Export mount and unmount functions using the utility
 export function mount({el, serviceApi}: mf1MountProps): { unmount: () => void } {
+  // No updateProps here: the host remounts this remote when serviceApi changes.
   return mountUtils.render(el, <Mfe1App serviceApi={serviceApi} />);
 }
 

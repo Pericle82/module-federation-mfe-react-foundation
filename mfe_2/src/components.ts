@@ -1,3 +1,10 @@
+// Presentational styled-components for mfe_2, built on the local `theme`.
+// Private to the remote (only ./mount is exposed).
+//
+// NOTE (COMPREHENSIVE_GUIDE.md § 10.7): `Button` takes a `variant` prop that is
+// not transient, so styled-components forwards it to the DOM and React logs
+// "unknown prop variant". Renaming it to `$variant` (here and at the call sites
+// in mount.tsx) silences it.
 import styled from 'styled-components';
 import { theme } from './theme';
 

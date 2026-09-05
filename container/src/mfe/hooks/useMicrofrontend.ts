@@ -1,6 +1,23 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { loadMicrofrontendModule, isValidModuleName, MicrofrontendModuleName } from './moduleLoader';
 
+/**
+ * The single place where the host drives a remote's lifecycle
+ * (COMPREHENSIVE_GUIDE.md § 7).
+ *
+ * The contract with every remote is one function: `mount({ el, ...props })`
+ * returns a handle with `unmount()` (and optionally `updateProps()`). The host
+ * never renders anything inside `el` - from the moment it is handed over, that
+ * subtree belongs to the remote, which creates its own React root on it.
+ *
+ * Responsibilities kept here so the wrappers stay ~20 lines each:
+ *   - lazy `import()` of the federated module through the static loader map;
+ *   - retry with backoff when a remote's dev server is not up yet, which is
+ *     what makes an imperfect startup order survivable (§ 3.3);
+ *   - unmount on cleanup, which cascades into the remote's own effect cleanups
+ *     and therefore into every bus unsubscribe (§ 5.2);
+ *   - `updateProps` as an alternative to a full remount.
+ */
 export interface MicrofrontendHookOptions<T = any> {
   /**
    * The name of the microfrontend module to import (e.g., 'mfe_1/mount')
@@ -69,8 +86,11 @@ export function useMicrofrontend<T = any>(options: MicrofrontendHookOptions<T>) 
     retryDelay = 1000
   } = options;
 
+  // The only DOM contact point: this <div> is passed to the remote's mount().
   const elementRef = useRef<HTMLElement>(null);
+  // Handle returned by mount(), needed to unmount / updateProps later.
   const instanceRef = useRef<MicrofrontendInstance | null>(null);
+  // `onLoad` must fire once per hook instance, not on every remount.
   const hasLoadedRef = useRef(false);
   const retryCountRef = useRef(0);
 
@@ -85,11 +105,14 @@ export function useMicrofrontend<T = any>(options: MicrofrontendHookOptions<T>) 
     }
     
     try {
-      // Use the explicit module loader to help webpack understand the imports
+      // Use the explicit module loader to help webpack understand the imports.
+      // This await is where the MF runtime injects <script remoteEntry.js>,
+      // calls init(shareScope) and resolves the exposed factory (§ 3.3).
       const module = await loadMicrofrontendModule(moduleName);
       const { mount } = module;
       
-      // Prepare mount arguments with proper typing
+      // The mount contract: always `el`, plus whatever the wrapper passes
+      // (in practice `{ serviceApi }`).
       const mountArgs = {
         el: elementRef.current as HTMLElement,
         ...(mountProps || {})
@@ -110,7 +133,9 @@ export function useMicrofrontend<T = any>(options: MicrofrontendHookOptions<T>) 
     } catch (error) {
       console.error(`Error loading microfrontend ${moduleName}:`, error);
       
-      // Retry logic
+      // A failure here usually means the remote's dev server is not answering
+      // yet, so the import of remoteEntry.js was rejected. Retrying on a timer
+      // (5 x 2s from the wrappers) covers a slow or out-of-order startup.
       if (retryOnFailure && retryCountRef.current < maxRetries) {
         retryCountRef.current += 1;
         console.log(`Retrying to load ${moduleName} (attempt ${retryCountRef.current}/${maxRetries}) in ${retryDelay}ms...`);
@@ -124,7 +149,12 @@ export function useMicrofrontend<T = any>(options: MicrofrontendHookOptions<T>) 
     }
   }, [moduleName, mountProps, onLoad, retryOnFailure, maxRetries, retryDelay]);
 
-  // Mount/unmount effect
+  // Mount/unmount effect.
+  // KNOWN ISSUE (§ 10.2): `attemptMount` is in the dependency array and depends
+  // on `mountProps`/`onLoad`, which the wrappers rebuild on every host render -
+  // so every re-render of <App> unmounts and remounts every remote, losing its
+  // local state. Harmless today (<App> renders twice), a bug as soon as the
+  // host gains more state. Fix: useMemo the props, keep onLoad in a ref.
   useEffect(() => {
     if (!isReady) return;
     
@@ -137,7 +167,9 @@ export function useMicrofrontend<T = any>(options: MicrofrontendHookOptions<T>) 
       attemptMount();
     }
 
-    // Cleanup function
+    // Unmounting the remote triggers, inside the remote, root.unmount() ->
+    // every useEffect cleanup -> every bus unsubscribe. Nothing leaks as long
+    // as this runs.
     return () => {
       isMounted = false;
       if (instanceRef.current?.unmount) {
@@ -147,7 +179,9 @@ export function useMicrofrontend<T = any>(options: MicrofrontendHookOptions<T>) 
     };
   }, [moduleName, isReady, attemptMount, ...dependencies]);
 
-  // Update props effect (only if updatePropsOnChange is true)
+  // Opt-in alternative to remounting: hand the new props to the live instance.
+  // Only mfe_2 exposes `updateProps`, and the dependency array is deliberately
+  // empty when the option is off so the effect never fires.
   useEffect(() => {
     if (updatePropsOnChange && instanceRef.current?.updateProps && mountProps) {
       instanceRef.current.updateProps(mountProps);

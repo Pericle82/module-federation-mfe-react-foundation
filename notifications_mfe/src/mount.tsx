@@ -1,3 +1,12 @@
+/**
+ * notifications_mfe - public module of the dashboard remote
+ * (COMPREHENSIVE_GUIDE.md § 5.8).
+ *
+ * Consumer *and* producer: it reads the `items` and `users` channels, and
+ * republishes an aggregate on the `notifications` channel that the other three
+ * remotes display in their headers. No HTTP of its own beyond the initial load.
+ */
+
 import React from 'react';
 import { useNotifications } from './useNotifications';
 import { mountUtils } from './useMount';
@@ -21,6 +30,8 @@ const NotificationsMfeApp: React.FC<NotificationsMfeProps> = (props) => {
   const { serviceApi } = props;
   const { stats, activities } = useNotifications({ serviceApi });
 
+  // Maps an activity type to an icon; the `default` branch keeps the feed
+  // rendering if a new type is added to the hook before this switch.
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'user_added': return '👤➕';

@@ -1,7 +1,14 @@
 #!/bin/bash
 
 # Stop all MFE services
-# Usage: ./stop_all_mfe.sh [--force]
+# Usage: ./stop_all_mfe.sh [--force]   (--force = SIGKILL instead of SIGTERM)
+#
+# Three passes: PID files written by start_all_mfe.sh, then a pattern sweep,
+# then whoever still holds one of the ports.
+#
+# WARNING (COMPREHENSIVE_GUIDE.md § 9): the second pass kills ANY process on
+# this machine matching 'npm start' or 'webpack.*serve', including projects
+# unrelated to this repository.
 
 FORCE_KILL=false
 if [[ "$1" == "--force" ]]; then
@@ -30,14 +37,16 @@ if [[ -d "logs" ]]; then
   done
 fi
 
-# Kill remaining npm processes
+# Second pass: anything started outside the PID files (e.g. a service launched
+# by hand). Not scoped to this project - see the warning at the top.
 PIDS=$(ps aux | grep -E 'npm start|webpack.*serve' | grep -v grep | awk '{print $2}')
 if [[ -n "$PIDS" ]]; then
   echo "Killing remaining npm processes..."
   echo "$PIDS" | xargs kill -9 2>/dev/null || true
 fi
 
-# Clean up ports
+# Third pass: last resort, free the ports themselves so a restart does not hit
+# EADDRINUSE.
 PORTS=(3000 3001 3002 3003 3004 3005 4000)
 for port in "${PORTS[@]}"; do
   PID=$(lsof -ti:$port 2>/dev/null || true)

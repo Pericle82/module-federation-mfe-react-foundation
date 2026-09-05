@@ -1,5 +1,17 @@
+/**
+ * Artificial latency, to make the loading and synchronisation behaviour of the
+ * micro-frontends visible while developing.
+ *
+ * Deliberately narrow: only `GET /items` without a query string is slowed down.
+ * Writes stay fast (so the write -> re-read -> broadcast chain is quick) and
+ * mfe_2's filter (`?q=`) stays responsive.
+ *
+ * Side effect worth knowing (COMPREHENSIVE_GUIDE.md § 10.7): at startup three
+ * MFEs fetch /items at once, so the 2s are paid three times in parallel - which
+ * is exactly the window the "broadcast wins over a slow initial fetch" guards
+ * in useItems/useItemsFilter/useNotifications exist for.
+ */
 module.exports = (req, res, next) => {
-  // Apply delay only to specific GET operations that should simulate slow loading
   const shouldDelay = (
     req.method === 'GET' && 
     req.path === '/items' && 

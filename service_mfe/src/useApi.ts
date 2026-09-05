@@ -1,7 +1,23 @@
 import { useState } from "react";
 import { fetchItems, addItemImmediate, removeItemImmediate, filterItems, fetchUsers, addUserImmediate, removeUserImmediate, filterUsers } from "./api";
 
+/**
+ * Wraps the raw api.ts calls with per-operation loading and error state.
+ *
+ * Every handler follows the same shape:
+ *   loader on + clear error -> call -> (error: store the message and rethrow)
+ *   -> finally: loader off.
+ *
+ * The state lives inside service_mfe's own (invisible) React component. It is
+ * exposed on the API as `loaders`/`errors`, but only as a snapshot: consumers
+ * are never notified when it changes, which is why the local loading banners in
+ * mfe_1 and users_mfe never show up (COMPREHENSIVE_GUIDE.md § 10.1). The
+ * loading feedback that does work travels on the bus instead, via
+ * `notifyLoadingChange` in mount.tsx (§ 5.7).
+ */
 export const useAPI = () => {
+    // One flag and one error slot per operation, so that a failing add does not
+    // blank out the message of a failing fetch.
     const [loaders, setLoaders] = useState({
         fetchItems: false,
         addItem: false,
@@ -40,6 +56,9 @@ export const useAPI = () => {
         }
     };
 
+    // CONTRACT MISMATCH (§ 10.3): ServiceMfeApi declares `addItem(item: any)`,
+    // but this expects a plain string - it trims it and builds the record
+    // itself. Passing an object throws. All current callers pass a string.
     const addItemHandler = async (newItem: string) => {
         if (!newItem.trim()) return;
         setLoaders(prev => ({ ...prev, addItem: true }));
@@ -47,8 +66,10 @@ export const useAPI = () => {
         try {
             const createdItem = await addItemImmediate({ name: newItem });
             console.log('Item added successfully:', createdItem);
-            // Return the created item - ServiceContext will handle optimistic updates
-            return [createdItem]; // Return array with the new item
+            // The return value is essentially ignored: callers wait for the
+            // broadcast that follows the re-read (§ 5.4). It exists only to
+            // satisfy the Promise<any[]> signature.
+            return [createdItem];
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error adding item';
             console.error('Error adding item:', error);
@@ -65,8 +86,9 @@ export const useAPI = () => {
         try {
             await removeItemImmediate(id);
             console.log('Item removed successfully');
-            // Don't refetch here - let the ServiceContext handle the state update
-            return []; // Return empty array to satisfy the interface
+            // No refetch here on purpose: mount.tsx re-reads and broadcasts the
+            // fresh list to everybody. The empty array just satisfies the type.
+            return [];
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error removing item';
             console.error('Error removing item:', error);
@@ -81,8 +103,9 @@ export const useAPI = () => {
         setLoaders(prev => ({ ...prev, filterItems: true }));
         setErrors(prev => ({ ...prev, filterItems: null }));
         try {
+            // An empty query means "no filter": fall back to the full list.
             if (!query) {
-                return fetchItemsHandler(); // Return all items if no query
+                return fetchItemsHandler();
             }
             const data = await filterItems(query);
             return data;
@@ -96,7 +119,7 @@ export const useAPI = () => {
         }
     };
 
-    // Users handlers
+    // Users handlers - same shape as the items ones above, on /users.
     const fetchUsersHandler = async () => {
         setLoaders(prev => ({ ...prev, fetchUsers: true }));
         setErrors(prev => ({ ...prev, fetchUsers: null }));
@@ -118,6 +141,9 @@ export const useAPI = () => {
         setLoaders(prev => ({ ...prev, addUser: true }));
         setErrors(prev => ({ ...prev, addUser: null }));
         try {
+            // Same string-not-object contract as addItemHandler (§ 10.3), plus
+            // an email synthesised from the name: "Mario Rossi" ->
+            // "mariorossi@example.com". The caller has no say in it.
             const createdUser = await addUserImmediate({ name: newUser, email: `${newUser.toLowerCase().replace(/\s+/g, '')}@example.com` });
             console.log('User added successfully:', createdUser);
             return [createdUser]; // Return array with the new user

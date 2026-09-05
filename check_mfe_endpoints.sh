@@ -1,6 +1,11 @@
 #!/bin/bash
 
-# Check MFE service availability
+# Check MFE service availability (COMPREHENSIVE_GUIDE.md § 9).
+#
+# Probing each remoteEntry.js is the fastest way to tell "the remote is down"
+# apart from "the remote is up but its mount fails": if this returns 200 for
+# everybody and the page is still empty, the problem is in the app, not in the
+# processes.
 
 SERVICES=(
   "Container:http://localhost:3000"

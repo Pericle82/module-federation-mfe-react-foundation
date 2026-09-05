@@ -1,14 +1,13 @@
 import React from 'react';
 import { useMicrofrontend } from './hooks/useMicrofrontend';
 
-export interface NotificationsMfeMountProps {
-  el: HTMLElement;
-  serviceApi?: any;
-}
-
-export interface NotificationsMfeApi {
-  unmount: () => void;
-}
+/**
+ * Host-side wrapper for the `notifications_mfe` remote (stats + activity feed).
+ *
+ * Rendered first in bootstrap.tsx so its dashboard sits on top; mount order has
+ * no semantic weight, though it does decide listener order on the bus (§ 5.6) -
+ * which is exactly why nothing should depend on it.
+ */
 
 export interface NotificationsMfeProps {
   serviceApi?: any;
@@ -19,6 +18,8 @@ export interface NotificationsMfeProps {
 const Notifications_Mfe: React.FC<NotificationsMfeProps> = ({ 
   serviceApi,
   onLoad, 
+  // Defaults to false: without an explicit gate this remote stays unmounted
+  // rather than mounting without a serviceApi.
   isReady = false 
 }) => {
   const { elementRef } = useMicrofrontend({

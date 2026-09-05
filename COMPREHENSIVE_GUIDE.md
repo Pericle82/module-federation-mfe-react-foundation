@@ -68,7 +68,7 @@ e ne usa solo il valore di ritorno. È al tempo stesso *data layer* (parla con i
 | `container` | 3000 | Orchestratore del ciclo di vita | **host** | — |
 | `mfe_1` | 3001 | CRUD items | remote | `./mount` |
 | `mfe_2` | 3002 | Filtro items + loading altrui | remote | `./mount` |
-| `service_mfe` | 3003 | API HTTP + bus eventi | remote | `./mount`, `./api` |
+| `service_mfe` | 3003 | API HTTP + bus eventi | remote | `./mount` |
 | `users_mfe` | 3004 | CRUD users | remote | `./mount` |
 | `notifications_mfe` | 3005 | Statistiche + activity feed | remote | `./mount` |
 | `mock_json_server` | 4000 | REST finto su `db.json` | — | — |
@@ -238,8 +238,7 @@ attraverso lo scope creato dall'host). Conseguenze e rimedio in § 8.
 
 Nota di incoerenza: `notifications_mfe` dichiara `eager: true` sui suoi `shared` e vi include
 anche `styled-components`, mentre gli altri usano `eager: false` e non condividono
-`styled-components`. `mfe_2` dichiara `@reduxjs/toolkit` e `react-redux`, che non sono nemmeno
-installati (§ 10.6).
+`styled-components`.
 
 ---
 
@@ -777,32 +776,51 @@ stringa, quindi il difetto è latente.
 `remoteEntry.js` viene caricato con un tag `<script>` (§ 3.3), non soggetto a CORS. Si romperebbe
 attivando `output.crossOriginLoading` o servendo i remote da un dominio diverso.
 
-### 10.5 Test non eseguibili
+### 10.5 Nessun test
 
-- `container/package.json` non ha script `test`; `jest.config.js` usa `preset: 'ts-jest'` ma
-  `ts-jest` non è installato → `npx jest` fallisce con *"Preset ts-jest not found"*.
-- I `moduleNameMapper` puntano a `<rootDir>/container/src/...` mentre `rootDir` **è già**
-  `container/` → percorsi doppi.
-- `setupFilesAfterEnv` punta a `@testing-library/jest-dom/extend-expect`, rimosso in v6.
-- `App.test.tsx` mocka un contratto che non esiste più (`options.data`, `onAdd`, `onRemove`).
-- `service_mfe/src/__tests__/mount.test.ts` chiama `mount(mockElement)` posizionale, mentre la
-  firma reale è `mount({ el })`; inoltre `service_mfe` non ha jest fra le dipendenze.
+La suite esistente era inservibile ed **è stata rimossa** (`container/jest.config.js`,
+`container/src/__tests__/`, `container/src/__mocks__/`, `service_mfe/src/__tests__/`), insieme
+alle devDependency `jest`, `@types/jest` e `@testing-library/*` che servivano solo a lei.
+Motivi per cui non girava, utili a chi la riscrive:
 
-### 10.6 Codice morto
+- `jest.config.js` usava `preset: 'ts-jest'` senza avere `ts-jest` installato, e
+  `container/package.json` non aveva nemmeno uno script `test`;
+- i `moduleNameMapper` puntavano a `<rootDir>/container/src/...` mentre `rootDir` **era già**
+  `container/` → percorsi doppi;
+- `setupFilesAfterEnv` puntava a `@testing-library/jest-dom/extend-expect`, rimosso in v6;
+- `App.test.tsx` mockava un contratto che non esiste più (`options.data`, `onAdd`, `onRemove`);
+- `service_mfe/src/__tests__/mount.test.ts` chiamava `mount(mockElement)` posizionale, mentre la
+  firma reale è `mount({ el })`.
 
-Non è referenziato da nulla e fallisce il typecheck:
+**Per ricominciare**: jest non sa nulla di Module Federation, quindi ogni `import('<remote>/mount')`
+va rimappato con `moduleNameMapper` su un mock locale. Il mock che conta è quello di
+`service_mfe/mount`: deve restituire una `ServiceMfeApi` finta (i `fetch*` più
+`onDataChange`/`notifyDataChange`), così da poter asserire che un broadcast arriva davvero allo
+stato dei remote (§ 5.4).
 
-| File | Nota |
+### 10.6 Codice morto — rimosso
+
+Questa sezione elencava il codice non referenziato da nulla. **È stato cancellato**: quanto
+segue resta come traccia di cosa c'era e perché.
+
+| Rimosso | Cos'era |
 |---|---|
-| [Store_Mfe.tsx](container/src/mfe/Store_Mfe.tsx) | file vuoto, residuo di `store_mfe` |
-| [service/ServiceContext.tsx](container/src/mfe/service/ServiceContext.tsx), [useService.ts](container/src/mfe/service/useService.ts), [ServiceContextExports.ts](container/src/mfe/service/ServiceContextExports.ts) | approccio Context precedente; `useService` chiama `mount(el)` con la firma vecchia |
-| [MFEstatus.tsx](container/src/MFEstatus.tsx) + `MFEstatus.module.css` | dashboard di stato mai renderizzata |
-| [createMicrofrontendComponent.tsx](container/src/mfe/hooks/createMicrofrontendComponent.tsx) | HOC mai usato, elenco remote non aggiornato |
-| [mock_json_server/cors.js](mock_json_server/cors.js) | `server.js` non lo registra (usa `jsonServer.defaults()`) |
-| `service_mfe` → `exposes: './api'` | nessuno consuma questo entry point |
+| `container/src/mfe/Store_Mfe.tsx` | file vuoto, residuo di `store_mfe` |
+| `container/src/mfe/service/` (`ServiceContext.tsx`, `useService.ts`, `ServiceContextExports.ts`) | approccio Context precedente; `useService` chiamava `mount(el)` con la firma vecchia |
+| `container/src/MFEstatus.tsx` + `MFEstatus.module.css` | dashboard di stato mai renderizzata |
+| `container/src/theme.module.css` | foglio di stile mai importato |
+| `container/src/mfe/hooks/createMicrofrontendComponent.tsx` | HOC mai usato, elenco remote non aggiornato |
+| `container/src/types/types.ts` | tipi duplicati e superati; il contratto vero è in `remotes.d.ts` |
+| `NotificationsMfeMountProps` / `NotificationsMfeApi` in `Notifications_Mfe.tsx` | copie locali del contratto già dichiarato in `remotes.d.ts` |
+| `mock_json_server/cors.js` | `server.js` non lo registrava (usa `jsonServer.defaults()`) |
+| `service_mfe` → `exposes: './api'` | nessuno consumava questo entry point |
 | `mfe_2` → `shared: { '@reduxjs/toolkit', 'react-redux' }` | pacchetti non installati, residuo di `store_mfe` |
+| `addItem` / `removeItem` in `service_mfe/src/api.ts` | varianti write-then-refetch: il percorso vivo usa le `*Immediate` |
+| `createMountFunction` in `useMount.ts` (mfe_1, mfe_2, users_mfe) | factory mai usata: ogni remote scrive il proprio `mount()` |
+| `StatusMessage` in `notifications_mfe/src/components.ts` | styled-component mai renderizzato |
+| import inutilizzato di `react` in `service_mfe/src/api.ts` | il modulo è di sole funzioni |
 
-`npx tsc --noEmit` nel container riporta errori **solo** su questi file: il codice vivo è pulito.
+`npx tsc --noEmit` è ora pulito in tutti i pacchetti, tranne i file di test di § 10.5.
 
 ### 10.7 Minori
 
@@ -845,7 +863,7 @@ Sistema avviato per intero (7 servizi) e guidato da browser. Esito:
 | Filtro server-side `?q=` e ri-applicazione del filtro dopo una remove (§ 5.5) | ✅ |
 | Banner di loading/errore locali di `mfe_1` e `users_mfe` | ❌ § 10.1 |
 | React condiviso fra host e remote | ❌ § 3.5, § 8 |
-| Suite di test | ❌ § 10.5 |
+| Suite di test | ❌ assente, § 10.5 |
 
 **Conclusione: l'idea di base funziona.** Il pattern "un servizio headless come data layer +
 message bus, iniettato per parametro" regge: i micro-frontend restano disaccoppiati (zero import

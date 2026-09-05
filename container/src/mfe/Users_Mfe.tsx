@@ -1,10 +1,17 @@
 import React from 'react';
 import { useMicrofrontend } from './hooks';
 
+/**
+ * Host-side wrapper for the `users_mfe` remote (users CRUD).
+ * Mirror of Mfe_1, on the `users` channel of the bus.
+ */
+
 export type UsersMfeProps = {
   serviceApi: any; // Service API with loaders and errors
   onLoad?: Function; // Optional prop to trigger initial load
-  isReady?: boolean; // Optional prop to indicate if the service is ready
+  // Optional here (defaults to true) unlike Mfe_1/Mfe_2, where it is required.
+  // bootstrap.tsx always passes it, so in practice the gate behaves the same.
+  isReady?: boolean;
 };
 
 const Users_Mfe: React.FC<UsersMfeProps> = ({ serviceApi, onLoad, isReady = true }) => {

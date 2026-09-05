@@ -1,3 +1,7 @@
+// Remote webpack config - users CRUD, served on :3004.
+// Unlike mfe_1/mfe_2 it also sets CORS headers on the dev server; the system
+// works either way because remoteEntry.js is loaded with a <script> tag, which
+// is not subject to CORS (COMPREHENSIVE_GUIDE.md § 10.4).
 const path = require('path');
 const { ModuleFederationPlugin } = require('webpack').container;
 
@@ -40,6 +44,15 @@ module.exports = {
     ],
   },
   plugins: [
+    // REMOTE side of Module Federation (§ 3.1):
+    //   name      -> the global the entry script defines (window.<name>) and
+    //                the left half of the host's `remotes` entry;
+    //   filename  -> served at http://<host>:<port>/remoteEntry.js;
+    //   exposes   -> the only public modules; the key is concatenated to the
+    //                remote name, so './mount' is imported as '<name>/mount'.
+    //                Everything else in src/ stays private to this remote.
+    //   shared    -> React must be a singleton, otherwise hooks break across
+    //                the boundary (§ 3.5, § A.3).
     new ModuleFederationPlugin({
       name: 'users_mfe',
       filename: 'remoteEntry.js',

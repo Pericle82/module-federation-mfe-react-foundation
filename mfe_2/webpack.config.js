@@ -1,3 +1,5 @@
+// Remote webpack config - items filter, served on :3002.
+// See COMPREHENSIVE_GUIDE.md § 3.1.
 const path = require('path');
 const { ModuleFederationPlugin } = require('webpack').container;
 
@@ -41,6 +43,15 @@ module.exports = {
     ],
   },
   plugins: [
+    // REMOTE side of Module Federation (§ 3.1):
+    //   name      -> the global the entry script defines (window.<name>) and
+    //                the left half of the host's `remotes` entry;
+    //   filename  -> served at http://<host>:<port>/remoteEntry.js;
+    //   exposes   -> the only public modules; the key is concatenated to the
+    //                remote name, so './mount' is imported as '<name>/mount'.
+    //                Everything else in src/ stays private to this remote.
+    //   shared    -> React must be a singleton, otherwise hooks break across
+    //                the boundary (§ 3.5, § A.3).
     new ModuleFederationPlugin({
       name: 'mfe_2',
       filename: 'remoteEntry.js',
@@ -50,8 +61,6 @@ module.exports = {
       shared: {
         react: { singleton: true, eager: false, requiredVersion: '^18.2.0' },
         'react-dom': { singleton: true, eager: false, requiredVersion: '^18.2.0' },
-        '@reduxjs/toolkit': { singleton: true },
-        'react-redux': { singleton: true },
       },
     }),
    
